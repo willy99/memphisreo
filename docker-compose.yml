@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: memphisreo-postgres
+    environment:
+      POSTGRES_DB: memphisreo
+      POSTGRES_USER: memphisreo
+      POSTGRES_PASSWORD: memphisreo
+    ports:
+      - "5432:5432"
+    volumes:
+      - memphisreo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memphisreo -d memphisreo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  memphisreo_pgdata:

@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: memphisreo-platform
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/memphisreo
+    username: ${DB_USERNAME:memphisreo}
+    password: ${DB_PASSWORD:memphisreo}
+
+  jpa:
+    # Без цього Hibernate Session відкривається на весь HTTP-запит ще до
+    # того, як наш код встигне виставити TenantContext (напр. у
+    # TenantRegistrationService) — tenant-ідентифікатор "заморожується" на
+    # значенні, резолвленому на момент відкриття сесії, і подальша зміна
+    # TenantContext на нього вже не впливає. Кожен repository-виклик має
+    # відкривати власну сесію й резолвити поточний tenant заново.
+    open-in-view: false
+    hibernate:
+      # Не "validate": tenant-сутності (address, property, ...) живуть у
+      # багатьох per-tenant схемах, що створюються по одній онлайн — немає
+      # єдиної схеми для звірки при старті. Flyway — єдине джерело правди.
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Flyway на старті мігрує ТІЛЬКИ control-plane схему. Tenant-схеми
+  # мігруються окремо, по одній на кожен tenant, через TenantProvisioningService
+  # (модуль tenant) — не при старті застосунку. docs/architecture.md §3.
+  flyway:
+    schemas: control_plane
+    default-schema: control_plane
+    locations: classpath:db/migration/control-plane
+    placeholder-replacement: false  # не використовуємо ${...}; уникає false-positive на JSON-контенті в міграціях
+
+# Секрети нижче — placeholder-и для локальної розробки, НЕ для прод.
+# Прод: base64-рядок з >=32 байтами ентропії з секрет-менеджера, окремий
+# ключ на tenant-realm і platform-realm — docs/security.md §6.
+memphisreo:
+  security:
+    tenant-jwt-secret: ${TENANT_JWT_SECRET:ZGV2LW9ubHktdGVuYW50LXNlY3JldC1jaGFuZ2UtbWUtMzJieXRlcyE=}
+    platform-jwt-secret: ${PLATFORM_JWT_SECRET:ZGV2LW9ubHktcGxhdGZvcm0tc2VjcmV0LWNoYW5nZS1tZS0zMmJ5dGVzIQ==}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
