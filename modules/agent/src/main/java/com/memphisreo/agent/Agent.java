@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Профіль агента, tenant-схема. Ролі/дозволи — окрема RBAC-модель у модулі
+ * Профіль агента, tenant-scoped (RLS). Ролі/дозволи — окрема RBAC-модель у модулі
  * {@code security} (Role/AgentRole), не поле тут — docs/domain-model.md §2.
  */
 @Entity
@@ -43,6 +44,7 @@ public class Agent {
     @Column(nullable = false)
     private Status status = Status.INVITED;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

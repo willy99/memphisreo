@@ -1,6 +1,6 @@
 # ADR-001: Мультитенантність — shared schema + RLS + cells
 
-*Статус: прийнято, 2026-10-05. Замінює попереднє рішення "schema-per-tenant"
+*Статус: прийнято й реалізовано, 2026-10-05. Замінює попереднє рішення "schema-per-tenant"
 (architecture.md §3 до цієї дати).*
 
 ## Контекст
@@ -26,9 +26,17 @@
 ### Рубіж 1 — застосунок (Hibernate)
 
 Дискримінаторна мультитенантність Hibernate 6 (`@TenantId` на полі
-`tenantId` сутності + `CurrentTenantIdentifierResolver` з `TenantContext`).
+`tenantId` сутності + `CurrentTenantResolver` з `TenantContext`).
 Hibernate сам додає фільтр за tenant до кожного запиту й сам проставляє
-`tenant_id` при вставці.
+`tenant_id` при вставці. Без `TenantContext` сесія отримує tenant
+`00000000-…` — жодного рядка (fail closed).
+
+**Уточнено при реалізації:** у Hibernate 6.5 цей фільтр НЕ діє на
+завантаження за ключем (`findById`/`em.find`) — перевірено тестом з
+вимкненим RLS. Тому до рубежу додано `TenantLoadGuard` (Hibernate
+post-load listener): tenant кожної завантаженої сутності звіряється з
+tenant-ом сесії, розбіжність → `TenantIsolationViolationException`
+(клієнту 404, у лог ERROR).
 
 ### Рубіж 2 — база даних (RLS)
 
@@ -40,30 +48,49 @@ CREATE POLICY tenant_isolation ON property
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
 ```
 
-- На початку кожної транзакції: `SET LOCAL app.tenant_id = '<tenant з JWT>'`.
-  `SET LOCAL` живе лише в межах транзакції — сумісно з пулом з'єднань і
-  PgBouncer у transaction mode; значення не "протікає" в наступний запит.
-- Без встановленого `app.tenant_id` політика не пропускає жодного рядка
+- `RlsTenantConnectionProvider` (Hibernate `MultiTenantConnectionProvider`)
+  на кожне з'єднання, видане сесії, виконує
+  `set_config('app.tenant_id', <tenant сесії>, false)` і скидає значення
+  при поверненні з'єднання в пул. Tenant — той самий, що у фільтра
+  рубежу 1. Значення виставляється при кожній видачі, тож невдалий скид
+  не "протікає" до наступного tenant-а.
+- **Уточнено при реалізації:** спершу планувався `SET LOCAL` на початку
+  транзакції, але Spring Data виконує власні query-методи репозиторіїв
+  без транзакції — такий хук їх пропускав (RLS повертав 0 рядків).
+  Наслідок рівня з'єднання: PgBouncer, якщо з'явиться, — лише в session
+  mode (пул з'єднань застосунку — HikariCP — цього не потребує).
+- Функція `app.current_tenant_id()` = `NULLIF(current_setting('app.tenant_id', true), '')::uuid`.
+  Без встановленого значення політика не пропускає жодного рядка
   (fail closed).
-- **Ролі БД:** `memphisreo_owner` (власник таблиць, міграції Flyway),
-  `memphisreo_app` (застосунок; не власник, без `BYPASSRLS`),
-  `memphisreo_platform` (з `BYPASSRLS` — лише platform admin, пошуковий
-  індекс, фонові job-и; окремий `DataSource`, використання явне).
+- **Ролі БД:** власник таблиць (логін міграцій Flyway; локально —
+  `memphisreo`), група `memphisreo_app` (застосунок; не власник, без
+  `BYPASSRLS`; права видають міграції), логін застосунку в цій групі
+  (облікові дані — від інфраструктури; локально — `memphisreo_app_user`
+  з `docker/postgres/init`). Роль `memphisreo_platform` з `BYPASSRLS`
+  (platform admin, фонові job-и) — з'явиться разом із першим
+  крос-тенантним сценарієм; до того схему `search` (без RLS) пише
+  `memphisreo_app`.
 
 ### Рубіж 3 — цілісність посилань
 
-Первинні ключі tenant-scoped таблиць — `(tenant_id, id)`, зовнішні —
+Кожна tenant-scoped таблиця має `UNIQUE (tenant_id, id)`, зовнішні ключі —
 складені: `FOREIGN KEY (tenant_id, property_id) REFERENCES property (tenant_id, id)`.
 БД фізично не дасть прив'язати запис агенції A до запису агенції B —
 цю дірку RLS сам не закриває (RLS фільтрує читання, а не FK-перевірки).
+Первинний ключ лишається `id`: Hibernate шукає за `id` в UPDATE/DELETE, і
+без окремого індексу на `id` ці операції сканували б таблицю.
 
 ### Рубіж 4 — тести в CI
 
-- Тест-інваріант: кожна таблиця з колонкою `tenant_id` має RLS-політику
-  і `FORCE ROW LEVEL SECURITY` (перевірка через `pg_class`/`pg_policies`).
-  Нова таблиця без політики ламає збірку.
-- IT ізоляції: дві агенції, кожен ендпоїнт перевіряється на відсутність
-  перехресного доступу (читання, зміна, посилання на чужий id).
+- `RowLevelSecurityInvariantIT`: кожна таблиця схеми `app` має
+  `tenant_id NOT NULL`, `FORCE ROW LEVEL SECURITY` з політикою
+  `tenant_isolation`, `UNIQUE (tenant_id, id)`; кожен FK містить
+  `tenant_id`; логін застосунку не суперкористувач, без `BYPASSRLS` і не
+  власник таблиць. Нова таблиця без цього ламає збірку.
+- `TenantIsolationIT`: дві агенції — читання, зміна й посилання на чужі
+  записи через API; RLS і складені FK напряму в БД.
+- Кожен рубіж перевірено окремо: з вимкненим RLS API все одно повертає
+  404 (рубіж 1), а з вимкненим фільтром Hibernate дані закриває RLS.
 
 ### Продуктивність
 
@@ -126,8 +153,10 @@ Control plane тримає мапу `tenant → cell`. Cell — окремий P
   `TenantMaintenanceRunner` (його функцію донарахування permission-ів
   вбудованим ролям перенести в одноразову міграцію/job).
 - Прибрати `tenant.schema_name`; додати `tenant.cell`.
-- Додати: `@TenantId`, встановлення `app.tenant_id` на початку транзакції,
+- Додати: `@TenantId`, `RlsTenantConnectionProvider`, `TenantLoadGuard`,
   ролі БД, RLS-політики й складені ключі в міграціях, тести з рубежу 4.
+- Реєстрація агенції стає атомарною: tenant, ролі, перший агент і його
+  логін — в одній транзакції (раніше — без компенсації при збої).
 - Міграції tenant-baseline переносяться в одну послідовність Flyway
   (одна схема `app`). Оскільки прод-даних немає, baseline перезбирається
   один раз; після першого прод-деплою — лише нові міграції.

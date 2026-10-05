@@ -15,7 +15,6 @@ export interface RegisterTenantRequest {
 
 export interface RegisterTenantResponse {
   tenantId: string;
-  schemaName: string;
   adminAgentId: string;
 }
 

@@ -34,7 +34,7 @@ until [ "$(docker inspect --format='{{.State.Health.Status}}' memphisreo-postgre
 done
 
 echo "==> Збираю проєкт (без тестів)..."
-mvn -q -pl platform-app -am package -DskipTests
+mvn -q -pl platform-app -am clean package -DskipTests
 
 echo "==> Запускаю бекенд на http://localhost:8080 ..."
 exec java -jar platform-app/target/platform-app-exec.jar

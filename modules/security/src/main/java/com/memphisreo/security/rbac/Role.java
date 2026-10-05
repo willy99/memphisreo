@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Роль всередині tenant-схеми. Дві built-in ролі (is_system_default = true)
+ * Роль агенції (tenant-scoped, RLS). Дві built-in ролі (is_system_default = true)
  * заводяться при онбордингу tenant-а: TENANT_ADMIN, AGENT. Tenant admin може
  * створювати власні ролі поверх каталогу {@link Permission} через адмінку —
  * docs/security.md §3.
@@ -31,6 +32,7 @@ public class Role {
     @Column(name = "is_system_default", nullable = false)
     private boolean systemDefault;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

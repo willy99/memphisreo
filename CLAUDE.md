@@ -20,8 +20,11 @@
 
 ## Команди
 
-- Інфраструктура: `docker compose up -d` (Postgres + MinIO)
-- Збірка: `mvn -DskipTests package`
+- Інфраструктура: `docker compose up -d` (Postgres + MinIO). Логін застосунку
+  створюється init-скриптом лише на свіжому томі: після зміни
+  `docker/postgres/init` — `docker compose down -v`.
+- Збірка: `mvn -DskipTests clean package` (`clean` обов'язковий: старі
+  міграції в `target/` ламають Flyway)
 - Unit-тести: `mvn test`
 - Інтеграційні тести (`*IT`, Testcontainers, потрібен Docker): `mvn verify`
 - Один IT: `mvn -pl platform-app verify -Dit.test=InquiryLeadFlowIT`
@@ -39,9 +42,13 @@
 ## Правила мультитенантності (критично)
 
 - `tenant_id` береться ТІЛЬКИ з JWT, ніколи з path/query/body.
-- Кожна tenant-scoped таблиця: колонка `tenant_id`, RLS-політика з `FORCE`,
-  індекси починаються з `tenant_id`, FK — складені `(tenant_id, ...)`.
-  Деталі — `docs/architecture.md` §3.
+- Нова таблиця — у схемі `app`: `tenant_id NOT NULL`, `UNIQUE (tenant_id, id)`,
+  FK — складені `(tenant_id, ...)`, індекси починаються з `tenant_id`, і в
+  тій самій міграції — `ENABLE`/`FORCE ROW LEVEL SECURITY` + політика
+  `tenant_isolation` (зразок — `V5__app_role_and_rls.sql`). Перевіряє
+  `RowLevelSecurityInvariantIT`. Сутність — з `@TenantId` на `tenantId`.
+- Застосунок ходить у БД логіном без прав власника (інакше RLS не діє);
+  міграції — логіном власника. ADR — `docs/adr/001-shared-schema-rls-cells.md`.
 - Крос-тенантний доступ (platform admin, пошуковий індекс) — лише через
   явно виділений шлях, ніколи "за замовчуванням".
 - Нова сутність без тесту ізоляції (агенція A не бачить даних агенції B) — не готова.

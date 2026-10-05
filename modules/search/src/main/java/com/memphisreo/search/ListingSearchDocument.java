@@ -12,8 +12,8 @@ import java.util.UUID;
 
 /**
  * Один денормалізований рядок на кожен Listing, у СПІЛЬНІЙ (не
- * tenant-scoped) схемі `search` — розв'язує колізію schema-per-tenant
- * (ізоляція) vs публічний крос-tenant пошук (потребує спільного індексу).
+ * tenant-scoped, без RLS і без @TenantId) схемі `search` — публічний
+ * крос-tenant пошук мусить бачити лістинги всіх агенцій.
  * Пишеться явним викликом з ListingService, не тригером БД.
  * docs/architecture.md §8.
  */

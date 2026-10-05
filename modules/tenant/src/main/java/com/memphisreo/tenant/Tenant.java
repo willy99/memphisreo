@@ -18,8 +18,11 @@ public class Tenant {
 
     public enum Status { TRIAL, ACTIVE, SUSPENDED, CHURNED }
 
+    /**
+     * Призначається при реєстрації ДО відкриття транзакції: під цим tenant-ом
+     * відкривається сесія, у якій створюються його ролі й перший агент (ADR-001).
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
@@ -31,12 +34,13 @@ public class Tenant {
     @Column(name = "country_code", nullable = false)
     private String countryCode;
 
-    /** EU / UA — яка регіональна інфраструктура обслуговує tenant-схему. */
+    /** EU / UA — регіон, у якому живуть дані tenant-а. */
     @Column(nullable = false)
     private String region;
 
-    @Column(name = "schema_name", nullable = false, unique = true)
-    private String schemaName;
+    /** Комірка (PostgreSQL-кластер) з даними tenant-а — ADR-001. */
+    @Column(nullable = false)
+    private String cell;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

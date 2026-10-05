@@ -26,7 +26,7 @@ public class PropertyController {
         this.propertyRepository = propertyRepository;
     }
 
-    /** Без where tenant_id = ? — schema-per-tenant вже скопіювала це для нас. */
+    /** Без where tenant_id = ? — це робить Hibernate @TenantId і RLS (ADR-001). */
     @GetMapping
     @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).PROPERTY_VIEW.name())")
     public ResponseEntity<List<Property>> list() {

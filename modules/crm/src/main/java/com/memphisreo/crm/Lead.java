@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -41,6 +42,7 @@ public class Lead {
     @Column(name = "next_follow_up_at")
     private Instant nextFollowUpAt;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

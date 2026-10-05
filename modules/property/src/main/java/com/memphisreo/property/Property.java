@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -78,6 +79,7 @@ public class Property {
     @Column(name = "created_by_agent_id", nullable = false)
     private UUID createdByAgentId;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

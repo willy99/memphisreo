@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.locationtech.jts.geom.Point;
+import org.hibernate.annotations.TenantId;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -46,6 +47,7 @@ public class Address {
     @Column(name = "geo_location", columnDefinition = "geography(Point,4326)")
     private Point geoLocation;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

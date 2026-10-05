@@ -62,10 +62,10 @@ cells.** Повне обґрунтування, розглянуті варіа�
   назва, країна, статус, `cell`), облікові записи, конфігурація країн.
 - **Data plane** — одна схема в межах комірки (cell); кожна
   tenant-scoped таблиця має `tenant_id`.
-- **Ізоляція у чотири рубежі:** Hibernate `@TenantId` (застосунок) → RLS
-  з `FORCE` і `SET LOCAL app.tenant_id` на кожну транзакцію (БД) →
-  складені ключі `(tenant_id, id)` і складені FK (цілісність) → тести-
-  інваріанти в CI.
+- **Ізоляція у чотири рубежі:** Hibernate `@TenantId` + post-load guard
+  (застосунок) → RLS з `FORCE` і `app.tenant_id` на кожному з'єднанні
+  сесії (БД) → `UNIQUE (tenant_id, id)` і складені FK (цілісність) →
+  тести-інваріанти в CI.
 - **Резолюція tenant-а** — лише з підписаного JWT claim `tenant_id`,
   кладеться в `TenantContext` (security.md §8).
 - **Провіжинінг нового tenant-а** — рядок у control plane + засів

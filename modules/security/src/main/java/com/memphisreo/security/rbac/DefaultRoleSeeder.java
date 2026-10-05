@@ -9,10 +9,9 @@ import java.util.stream.Collectors;
 
 /**
  * Дві built-in ролі на кожен новий tenant — docs/security.md §3. {@link #seed}
- * викликається TenantRegistrationService одразу після провіжинування схеми,
- * з TenantContext, уже виставленим на щойно створену схему. {@link
- * #syncSystemDefaults} — те саме для tenant-ів, зареєстрованих ДО появи
- * нового permission-коду (TenantMaintenanceRunner, docs/architecture.md §3).
+ * викликається TenantRegistrationService у транзакції реєстрації, під
+ * TenantContext щойно створеного tenant-а. Новий permission-код для вже
+ * існуючих tenant-ів додається міграцією даних, тільки додаючи (ADR-001).
  */
 @Service
 public class DefaultRoleSeeder {
@@ -57,24 +56,6 @@ public class DefaultRoleSeeder {
         grantMissing(agent, AGENT_DEFAULT_PERMISSIONS);
 
         return tenantAdmin;
-    }
-
-    /**
-     * Донараховує відсутні permission-и вбудованим ролям — тільки додає,
-     * ніколи не видаляє те, що tenant admin міг прибрати вручну. Викликається
-     * в межах TenantContext, уже виставленого на потрібну tenant-схему.
-     */
-    public void syncSystemDefaults(UUID tenantId) {
-        for (Role role : roleRepository.findByTenantId(tenantId)) {
-            if (!role.isSystemDefault()) {
-                continue;
-            }
-            if (TENANT_ADMIN_ROLE_NAME.equals(role.getName())) {
-                grantMissing(role, List.of(Permission.values()));
-            } else if (AGENT_ROLE_NAME.equals(role.getName())) {
-                grantMissing(role, AGENT_DEFAULT_PERMISSIONS);
-            }
-        }
     }
 
     private Role createRole(UUID tenantId, String name) {

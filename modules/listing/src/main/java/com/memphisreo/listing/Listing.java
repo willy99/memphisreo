@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -45,6 +46,7 @@ public class Listing {
     @Column(nullable = false)
     private Status status = Status.DRAFT;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

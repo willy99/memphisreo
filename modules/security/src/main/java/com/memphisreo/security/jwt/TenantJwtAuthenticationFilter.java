@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +24,8 @@ import java.util.UUID;
  * з query/path параметра (docs/security.md §7, §8).
  */
 public class TenantJwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(TenantJwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final TokenRevocationCheck revocationCheck;
@@ -52,11 +56,10 @@ public class TenantJwtAuthenticationFilter extends OncePerRequestFilter {
 
                     Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
-
-                    String schemaName = claims.get("schema_name", String.class);
-                    TenantContext.set(new TenantContext.TenantInfo(tenantId.toString(), schemaName));
+                    TenantContext.set(tenantId);
                 }
             } catch (Exception e) {
+                log.debug("JWT відхилено: {}", e.toString());
                 SecurityContextHolder.clearContext();
             }
         }

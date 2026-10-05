@@ -2,7 +2,6 @@ package com.memphisreo.security;
 
 import com.memphisreo.common.ForbiddenException;
 import com.memphisreo.common.TenantContext;
-import com.memphisreo.common.multitenancy.TenantSchemaResolver;
 import com.memphisreo.security.jwt.JwtService;
 import com.memphisreo.security.rbac.AgentPermissionResolver;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,12 +14,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Логін tenant-агента. Permissions читаються з tenant-схеми — TenantContext
- * тут виставляється ВРУЧНУ (немає ще JWT на цьому кроці), не через
- * JWT-фільтр. Легітимний ручний TenantContext поза request-scoped
- * фільтром — тут і в будь-якому іншому public-ендпоїнті, що резолвить
- * tenant за slug з path (напр. PublicInquiryController), а не з JWT.
- * docs/security.md §4.
+ * Логін tenant-агента. Permissions читаються з tenant plane під RLS — тож
+ * TenantContext тут виставляється ВРУЧНУ з tenant_id облікового запису
+ * (control plane), бо JWT на цьому кроці ще немає. Той самий легітимний
+ * виняток, що й у PublicInquiryController (tenant за slug). docs/security.md §4.
  */
 @Service
 public class LoginService {
@@ -30,18 +27,15 @@ public class LoginService {
     private final AccountIdentityRepository accountIdentityRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService tenantJwtService;
-    private final TenantSchemaResolver tenantSchemaResolver;
     private final AgentPermissionResolver agentPermissionResolver;
 
     public LoginService(AccountIdentityRepository accountIdentityRepository,
                          PasswordEncoder passwordEncoder,
                          @Qualifier("tenantJwtService") JwtService tenantJwtService,
-                         TenantSchemaResolver tenantSchemaResolver,
                          AgentPermissionResolver agentPermissionResolver) {
         this.accountIdentityRepository = accountIdentityRepository;
         this.passwordEncoder = passwordEncoder;
         this.tenantJwtService = tenantJwtService;
-        this.tenantSchemaResolver = tenantSchemaResolver;
         this.agentPermissionResolver = agentPermissionResolver;
     }
 
@@ -63,19 +57,12 @@ public class LoginService {
             throw new ForbiddenException("2FA увімкнено для цього акаунту — verify-крок ще не реалізований");
         }
 
-        String schemaName = tenantSchemaResolver.resolveSchema(account.getTenantId());
-        Set<String> permissions;
-        try {
-            TenantContext.set(new TenantContext.TenantInfo(account.getTenantId().toString(), schemaName));
-            permissions = agentPermissionResolver.resolve(account.getAgentId());
-        } finally {
-            TenantContext.clear();
-        }
+        Set<String> permissions = TenantContext.callAs(account.getTenantId(),
+                () -> agentPermissionResolver.resolve(account.getAgentId()));
 
         Map<String, Object> claims = Map.of(
                 "tenant_id", account.getTenantId().toString(),
                 "agent_id", account.getAgentId().toString(),
-                "schema_name", schemaName,
                 "token_version", account.getTokenVersion(),
                 "permissions", List.copyOf(permissions)
         );

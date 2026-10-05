@@ -14,7 +14,7 @@
     <artifactId>common</artifactId>
     <packaging>jar</packaging>
     <name>Memphisreo :: Common</name>
-    <description>Спільна інфраструктура (TenantContext, базові винятки) — docs/architecture.md §2</description>
+    <description>Спільна інфраструктура (TenantContext, мультитенантність, базові винятки) — docs/architecture.md §2</description>
 
     <dependencies>
         <dependency>
@@ -34,6 +34,11 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

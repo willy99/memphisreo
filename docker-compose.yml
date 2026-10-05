@@ -10,6 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - memphisreo_pgdata:/var/lib/postgresql/data
+      # Логін застосунку (не власник таблиць) — виконується лише при першій ініціалізації тому.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U memphisreo -d memphisreo"]
       interval: 5s

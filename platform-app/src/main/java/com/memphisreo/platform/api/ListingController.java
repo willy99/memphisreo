@@ -60,6 +60,10 @@ public class ListingController {
     @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).LISTING_PUBLISH.name())")
     public ResponseEntity<Listing> create(@AuthenticationPrincipal AuthenticatedAgent principal,
                                            @RequestBody CreateListingRequest request) {
+        // Об'єкт чужої агенції тут не знайдеться (@TenantId + RLS) → 404, а не
+        // помилка складеного FK з глибини БД (500).
+        propertyRepository.findById(request.propertyId())
+                .orElseThrow(() -> new NotFoundException("Обʼєкт нерухомості не знайдено: " + request.propertyId()));
         Listing listing = listingService.create(principal.tenantId(), principal.agentId(), request);
         syncSearchIndex(listing);
         return ResponseEntity.ok(listing);

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -45,6 +46,7 @@ public class Inquiry {
     @Column(nullable = false)
     private Status status = Status.NEW;
 
+    @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

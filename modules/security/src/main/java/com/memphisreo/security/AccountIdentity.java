@@ -10,7 +10,7 @@ import java.util.UUID;
 
 /**
  * Control-plane логін tenant-користувача (агента) — email → tenant_id → agent_id.
- * Профіль агента живе в tenant-схемі, це лише резолюція логіну. docs/domain-model.md §1.
+ * Профіль агента живе в tenant plane (схема app), це лише резолюція логіну. docs/domain-model.md §1.
  */
 @Entity
 @Table(name = "account_identity", schema = "control_plane")

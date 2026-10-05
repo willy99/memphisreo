@@ -26,7 +26,7 @@ public class LeadService {
         this.leadActivityRepository = leadActivityRepository;
     }
 
-    /** Dedup за email у межах поточної tenant-схеми — docs/domain-model.md §5. */
+    /** Dedup за email у межах поточного tenant-а — docs/domain-model.md §5. */
     public Client findOrCreateClient(UUID tenantId, String firstName, String lastName, String email,
                                       String phone, Client.Source source) {
         return clientRepository.findByEmail(email).orElseGet(() -> {

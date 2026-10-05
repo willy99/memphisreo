@@ -1,6 +1,6 @@
 -- Крос-tenant денормалізований пошуковий індекс — docs/architecture.md §8.
--- НЕ tenant-scoped: розв'язує колізію schema-per-tenant (ізоляція) vs
--- публічний пошук по всіх агенціях одразу.
+-- НЕ tenant-scoped (без RLS): публічний пошук бачить лістинги всіх агенцій,
+-- тоді як основні таблиці закриті RLS. Заділ під публічний портал (Фаза 4).
 CREATE SCHEMA IF NOT EXISTS search;
 
 CREATE TABLE search.listing_search_document (

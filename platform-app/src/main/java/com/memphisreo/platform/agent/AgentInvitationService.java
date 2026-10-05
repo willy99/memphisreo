@@ -5,7 +5,6 @@ import com.memphisreo.agent.AgentRepository;
 import com.memphisreo.common.ForbiddenException;
 import com.memphisreo.common.NotFoundException;
 import com.memphisreo.common.TenantContext;
-import com.memphisreo.common.multitenancy.TenantSchemaResolver;
 import com.memphisreo.security.AccountIdentity;
 import com.memphisreo.security.AccountIdentityRepository;
 import com.memphisreo.security.rbac.Role;
@@ -13,6 +12,7 @@ import com.memphisreo.security.rbac.RoleRepository;
 import com.memphisreo.security.rbac.RoleService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -37,21 +37,21 @@ public class AgentInvitationService {
     private final AccountIdentityRepository accountIdentityRepository;
     private final RoleRepository roleRepository;
     private final RoleService roleService;
-    private final TenantSchemaResolver tenantSchemaResolver;
+    private final TransactionTemplate transactionTemplate;
     private final PasswordEncoder passwordEncoder;
 
     public AgentInvitationService(AgentRepository agentRepository,
                                    AccountIdentityRepository accountIdentityRepository,
                                    RoleRepository roleRepository,
                                    RoleService roleService,
-                                   TenantSchemaResolver tenantSchemaResolver,
-                                   PasswordEncoder passwordEncoder) {
+                                   PasswordEncoder passwordEncoder,
+                                   TransactionTemplate transactionTemplate) {
         this.agentRepository = agentRepository;
         this.accountIdentityRepository = accountIdentityRepository;
         this.roleRepository = roleRepository;
         this.roleService = roleService;
-        this.tenantSchemaResolver = tenantSchemaResolver;
         this.passwordEncoder = passwordEncoder;
+        this.transactionTemplate = transactionTemplate;
     }
 
     public InviteAgentResponse invite(UUID tenantId, InviteAgentRequest request) {
@@ -86,29 +86,29 @@ public class AgentInvitationService {
     }
 
     public void acceptInvite(String token, String password) {
-        AccountIdentity account = accountIdentityRepository.findByInviteToken(token)
+        AccountIdentity found = accountIdentityRepository.findByInviteToken(token)
                 .orElseThrow(() -> new NotFoundException("Запрошення не знайдено"));
 
-        if (account.getInviteExpiresAt() == null || account.getInviteExpiresAt().isBefore(Instant.now())) {
+        if (found.getInviteExpiresAt() == null || found.getInviteExpiresAt().isBefore(Instant.now())) {
             throw new ForbiddenException("Запрошення протерміноване");
         }
 
-        account.setPasswordHash(passwordEncoder.encode(password));
-        account.setStatus(AccountIdentity.Status.ACTIVE);
-        account.setInviteToken(null);
-        account.setInviteExpiresAt(null);
-        accountIdentityRepository.save(account);
+        // Публічний ендпоїнт без JWT: tenant — з облікового запису (control plane),
+        // знайденого за токеном. Логін і профіль агента активуються атомарно.
+        TenantContext.runAs(found.getTenantId(), () -> transactionTemplate.executeWithoutResult(status -> {
+            AccountIdentity account = accountIdentityRepository.findById(found.getId())
+                    .orElseThrow(() -> new NotFoundException("Запрошення не знайдено"));
+            account.setPasswordHash(passwordEncoder.encode(password));
+            account.setStatus(AccountIdentity.Status.ACTIVE);
+            account.setInviteToken(null);
+            account.setInviteExpiresAt(null);
+            accountIdentityRepository.save(account);
 
-        String schemaName = tenantSchemaResolver.resolveSchema(account.getTenantId());
-        try {
-            TenantContext.set(new TenantContext.TenantInfo(account.getTenantId().toString(), schemaName));
             Agent agent = agentRepository.findById(account.getAgentId())
                     .orElseThrow(() -> new NotFoundException("Agent не знайдено: " + account.getAgentId()));
             agent.setStatus(Agent.Status.ACTIVE);
             agentRepository.save(agent);
-        } finally {
-            TenantContext.clear();
-        }
+        }));
     }
 
     private UUID defaultAgentRoleId(UUID tenantId) {

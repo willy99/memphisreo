@@ -17,7 +17,7 @@ import java.util.UUID;
 /**
  * Публічна форма "зв'язатись зі мною" — немає JWT, тому tenant резолвиться
  * за slug з path, не з claim'у. TenantContext виставляється вручну на час
- * запиту — легітимний виняток поза JWT-фільтром, docs/security.md §4.
+ * виклику — легітимний виняток поза JWT-фільтром, docs/security.md §4.
  */
 @RestController
 @RequestMapping("/api/public/tenants/{tenantSlug}/listings/{listingId}/inquiries")
@@ -42,18 +42,12 @@ public class PublicInquiryController {
         Tenant tenant = tenantRepository.findBySlug(tenantSlug)
                 .orElseThrow(() -> new NotFoundException("Агенцію не знайдено: " + tenantSlug));
 
-        try {
-            TenantContext.set(new TenantContext.TenantInfo(tenant.getId().toString(), tenant.getSchemaName()));
-
+        Inquiry inquiry = TenantContext.callAs(tenant.getId(), () -> {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new NotFoundException("Лістинг не знайдено: " + listingId));
-
-            Inquiry inquiry = inquiryService.create(tenant.getId(), listingId, listing.getAgentId(),
+            return inquiryService.create(tenant.getId(), listingId, listing.getAgentId(),
                     request.contactName(), request.contactEmail(), request.contactPhone(), request.message());
-
-            return ResponseEntity.ok(inquiry);
-        } finally {
-            TenantContext.clear();
-        }
+        });
+        return ResponseEntity.ok(inquiry);
     }
 }

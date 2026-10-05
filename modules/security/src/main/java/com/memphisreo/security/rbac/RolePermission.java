@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 
 import java.util.UUID;
 
@@ -27,4 +28,9 @@ public class RolePermission {
 
     @Column(name = "permission_code", nullable = false)
     private String permissionCode;
+
+    /** Заповнює Hibernate з поточного tenant-а сесії — ADR-001. */
+    @TenantId
+    @Column(name = "tenant_id", nullable = false)
+    private UUID tenantId;
 }

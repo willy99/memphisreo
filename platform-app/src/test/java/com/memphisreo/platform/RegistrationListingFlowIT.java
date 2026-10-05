@@ -28,7 +28,7 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
 
         RegisterTenantResponse registration = register(slug, email, password, "UA");
         assertThat(registration.tenantId()).isNotNull();
-        assertThat(registration.schemaName()).startsWith("tenant_acme_");
+        assertThat(registration.adminAgentId()).isNotNull();
 
         String token = login(email, password);
         assertThat(token).isNotBlank();
