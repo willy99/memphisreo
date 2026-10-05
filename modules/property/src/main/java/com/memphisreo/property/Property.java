@@ -41,7 +41,13 @@ public class Property {
     @Column(name = "area_sqm", nullable = false)
     private BigDecimal areaSqm;
 
+    /** Площа ділянки — окремо від area_sqm (площі будівлі), для house/land. */
+    @Column(name = "land_area_sqm")
+    private BigDecimal landAreaSqm;
+
     private Integer rooms;
+    private Integer bedrooms;
+    private Integer bathrooms;
     private Integer floor;
 
     @Column(name = "total_floors")
@@ -49,6 +55,16 @@ public class Property {
 
     @Column(name = "year_built")
     private Integer yearBuilt;
+
+    @Column(name = "has_elevator")
+    private Boolean hasElevator;
+
+    @Column(name = "parking_spaces")
+    private Integer parkingSpaces;
+
+    /** Вільний текст для публічного пошуку — docs/architecture.md §8. */
+    @Column(columnDefinition = "text")
+    private String description;
 
     /** Per-country/per-type поля, валідуються проти Country.requiredPropertyFields — docs/domain-model.md §4. */
     @JdbcTypeCode(SqlTypes.JSON)

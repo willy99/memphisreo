@@ -5,6 +5,12 @@ import com.memphisreo.listing.CreateListingRequest;
 import com.memphisreo.listing.Listing;
 import com.memphisreo.listing.ListingRepository;
 import com.memphisreo.listing.ListingService;
+import com.memphisreo.property.Address;
+import com.memphisreo.property.AddressRepository;
+import com.memphisreo.property.Property;
+import com.memphisreo.property.PropertyRepository;
+import com.memphisreo.search.ListingSearchDocument;
+import com.memphisreo.search.SearchIndexer;
 import com.memphisreo.security.jwt.AuthenticatedAgent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,16 +20,34 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Композиційний корінь для Listing: після listingService.create() явно
+ * збирає {@link ListingSearchDocument} з Property+Address (інший модуль) і
+ * синхронізує через {@link SearchIndexer} — той самий патерн, що й
+ * TenantRegistrationService/AgentInvitationService. ListingService сам
+ * не знає про property/search модулі (межа модуля — тільки сирі UUID).
+ * docs/architecture.md §8.
+ */
 @RestController
 @RequestMapping("/api/listings")
 public class ListingController {
 
     private final ListingService listingService;
     private final ListingRepository listingRepository;
+    private final PropertyRepository propertyRepository;
+    private final AddressRepository addressRepository;
+    private final SearchIndexer searchIndexer;
 
-    public ListingController(ListingService listingService, ListingRepository listingRepository) {
+    public ListingController(ListingService listingService,
+                              ListingRepository listingRepository,
+                              PropertyRepository propertyRepository,
+                              AddressRepository addressRepository,
+                              SearchIndexer searchIndexer) {
         this.listingService = listingService;
         this.listingRepository = listingRepository;
+        this.propertyRepository = propertyRepository;
+        this.addressRepository = addressRepository;
+        this.searchIndexer = searchIndexer;
     }
 
     @GetMapping
@@ -37,7 +61,42 @@ public class ListingController {
     public ResponseEntity<Listing> create(@AuthenticationPrincipal AuthenticatedAgent principal,
                                            @RequestBody CreateListingRequest request) {
         Listing listing = listingService.create(principal.tenantId(), principal.agentId(), request);
+        syncSearchIndex(listing);
         return ResponseEntity.ok(listing);
+    }
+
+    private void syncSearchIndex(Listing listing) {
+        Property property = propertyRepository.findById(listing.getPropertyId())
+                .orElseThrow(() -> new NotFoundException("Обʼєкт нерухомості не знайдено: " + listing.getPropertyId()));
+        Address address = addressRepository.findById(property.getAddressId())
+                .orElseThrow(() -> new NotFoundException("Адресу не знайдено: " + property.getAddressId()));
+
+        ListingSearchDocument document = new ListingSearchDocument();
+        document.setListingId(listing.getId());
+        document.setTenantId(listing.getTenantId());
+        document.setPropertyId(property.getId());
+        document.setDealType(listing.getDealType().name());
+        document.setPropertyType(property.getType().name());
+        document.setStatus(listing.getStatus().name());
+        document.setCountryCode(address.getCountryCode());
+        document.setRegion(address.getRegion());
+        document.setCity(address.getCity());
+        document.setDistrict(address.getDistrict());
+        document.setGeoLocation(address.getGeoLocation());
+        document.setPrice(listing.getPrice());
+        document.setCurrency(listing.getCurrency());
+        document.setAreaSqm(property.getAreaSqm());
+        document.setLandAreaSqm(property.getLandAreaSqm());
+        document.setRooms(property.getRooms());
+        document.setBedrooms(property.getBedrooms());
+        document.setBathrooms(property.getBathrooms());
+        document.setFloor(property.getFloor());
+        document.setTotalFloors(property.getTotalFloors());
+        document.setYearBuilt(property.getYearBuilt());
+        document.setDescription(property.getDescription());
+        document.setPublishedAt(listing.getPublishedAt());
+
+        searchIndexer.index(document);
     }
 
     @GetMapping("/{id}")

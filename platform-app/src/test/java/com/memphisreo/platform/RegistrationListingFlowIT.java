@@ -1,17 +1,12 @@
 package com.memphisreo.platform;
 
-import com.memphisreo.listing.CreateListingRequest;
 import com.memphisreo.listing.Listing;
 import com.memphisreo.platform.api.AuthController;
-import com.memphisreo.platform.registration.RegisterTenantRequest;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
-import com.memphisreo.property.CreatePropertyRequest;
 import com.memphisreo.property.Property;
-import com.memphisreo.security.LoginService;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.*;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Кодифікує флоу, вручну перевірений curl-ами під час live-верифікації:
  * реєстрація → логін → property → listing → round-trip → ізоляція між
- * tenant-ами. Жоден з 7 багів, знайдених тоді (Flyway placeholder,
+ * tenant-ами. Жоден з багів, знайдених тоді (Flyway placeholder,
  * open-in-view, ddl-auto=validate, Bouncy Castle, executable jar,
  * -parameters, column-мапінг), не був би спійманий без реального Postgres.
  */
@@ -87,54 +82,5 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
         AuthController.LoginRequest badLogin = new AuthController.LoginRequest(email, "WrongPassword!");
         ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/login", badLogin, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    private RegisterTenantResponse register(String slug, String email, String password, String countryCode) {
-        RegisterTenantRequest request = new RegisterTenantRequest(
-                "Agency " + slug, slug, countryCode, email, password, "Test", "Admin");
-        ResponseEntity<RegisterTenantResponse> response =
-                restTemplate.postForEntity("/api/public/tenants/register", request, RegisterTenantResponse.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody();
-    }
-
-    private String login(String email, String password) {
-        AuthController.LoginRequest request = new AuthController.LoginRequest(email, password);
-        ResponseEntity<LoginService.LoginResult> response =
-                restTemplate.postForEntity("/api/auth/login", request, LoginService.LoginResult.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody().accessToken();
-    }
-
-    private Property createProperty(String token, String countryCode, String attributesJson) {
-        CreatePropertyRequest request = new CreatePropertyRequest(
-                Property.Type.APARTMENT, "12", new BigDecimal("54.5"), 2, 3, 9, 2015,
-                attributesJson, countryCode, null, "Kyiv", "Pecherskyi", "Khreshchatyk", "1", "01001",
-                50.4501, 30.5234);
-        ResponseEntity<Property> response = restTemplate.exchange(
-                "/api/properties", HttpMethod.POST, authed(token, request), Property.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody();
-    }
-
-    private Listing createListing(String token, UUID propertyId) {
-        CreateListingRequest request = new CreateListingRequest(
-                propertyId, Listing.DealType.SALE, new BigDecimal("95000"), "USD");
-        ResponseEntity<Listing> response = restTemplate.exchange(
-                "/api/listings", HttpMethod.POST, authed(token, request), Listing.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody();
-    }
-
-    private HttpEntity<Void> authed(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return new HttpEntity<>(headers);
-    }
-
-    private <T> HttpEntity<T> authed(String token, T body) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return new HttpEntity<>(body, headers);
     }
 }

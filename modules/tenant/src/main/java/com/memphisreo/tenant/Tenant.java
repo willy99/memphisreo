@@ -45,6 +45,14 @@ public class Tenant {
     @Column(name = "subscription_plan")
     private String subscriptionPlan;
 
+    /**
+     * Deal створюється автоматично при Lead.status→WON, чи явною дією
+     * агента — docs/domain-model.md §6. За замовчуванням false (безпечніший
+     * дефолт — не створювати записи без явної дії).
+     */
+    @Column(name = "auto_create_deal_on_won", nullable = false)
+    private boolean autoCreateDealOnWon = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

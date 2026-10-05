@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../api/client";
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -19,7 +21,7 @@ export function LoginPage() {
       await login(email, password);
       navigate("/properties");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Не вдалося увійти");
+      setError(err instanceof ApiError ? err.message : t("login.error"));
     } finally {
       setSubmitting(false);
     }
@@ -27,19 +29,19 @@ export function LoginPage() {
 
   return (
     <div className="page page-narrow">
-      <h1>Вхід</h1>
+      <h1>{t("login.title")}</h1>
       <form onSubmit={handleSubmit} className="form">
         <label>
-          Email
+          {t("login.email")}
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
         <label>
-          Пароль
+          {t("login.password")}
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </label>
         {error && <p className="error">{error}</p>}
         <button type="submit" disabled={submitting}>
-          {submitting ? "Входимо…" : "Увійти"}
+          {submitting ? t("login.submitting") : t("login.submit")}
         </button>
       </form>
     </div>

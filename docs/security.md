@@ -59,9 +59,18 @@ control plane (бо `PERMISSION` мав би бути глобальним) — 
 
 **Дві built-in роль на кожен новий tenant** (`is_system_default = true`,
 незнищувані): `TENANT_ADMIN` (усі permissions) і `AGENT` (типовий робочий
-набір: property/listing/inquiry CRUD, без керування агентами/ролями).
-Tenant admin може створювати власні ролі з підмножини каталогу через
-адмінку — саме це і є "конфігурується онлайн".
+набір: property/listing/inquiry/lead/client CRUD, без керування
+агентами/ролями). Tenant admin може створювати власні ролі з підмножини
+каталогу через адмінку — саме це і є "конфігурується онлайн".
+
+**Каталог росте разом з фазами** (Фаза 2 додала `LEAD_VIEW`,
+`LEAD_MANAGE`, `CLIENT_VIEW`, `CLIENT_MANAGE`). Оскільки built-in ролі
+сіються один раз при онбордингу tenant-а, tenant-и, зареєстровані до
+появи нового permission-коду, не отримають його автоматично — це
+закрито `TenantMaintenanceRunner` (architecture.md §3): на старті
+застосунку донараховує відсутні permission-и вбудованим ролям для
+кожного вже існуючого tenant-а, **тільки додаючи**, не видаляючи те,
+що tenant admin міг прибрати вручну кастомізацією ролі.
 
 **RBAC відповідає на "чи може ця роль робити дію X", не на "чи може ЦЕЙ
 агент редагувати ЦЕЙ КОНКРЕТНИЙ лістинг".** Друге — перевірка володіння
@@ -146,7 +155,34 @@ require_2fa_for_agents` (bool) — tenant admin вмикає обов'язков
 чужий tenant_id і бачить чужі дані). Це стосується кожного ендпоїнта без
 винятку.
 
-## 9. Відкриті питання
+## 9. Запрошення агента (invite-флоу)
+
+Немає email-інфраструктури — адмінка не вдає, що лист пішов, а показує
+посилання-запрошення для ручної передачі (Slack/месенджер), чесно про
+поточне обмеження.
+
+`ACCOUNT_IDENTITY` отримує `invite_token` (nullable, унікальний
+частковий індекс), `invite_expires_at` (nullable), і новий статус
+`PENDING_INVITE` (окрім `ACTIVE`/`DISABLED`) — `password_hash` теж стає
+nullable до моменту прийняття запрошення.
+
+Флоу:
+1. `POST /api/agents/invite` (`AGENT_INVITE`) — створює `Agent`
+   (`status=INVITED`, tenant-схема) і `AccountIdentity`
+   (`status=PENDING_INVITE`, `password_hash=null`, `invite_token`,
+   `invite_expires_at=+7 днів`, control plane). Повертає посилання
+   з токеном — адмін копіює й передає агенту вручну.
+2. `POST /api/auth/accept-invite` (публічний) — за токеном (не
+   протермінованим) встановлює `password_hash`, чистить токен,
+   переводить `AccountIdentity.status → ACTIVE`, `Agent.status → ACTIVE`.
+3. `LoginService` відхиляє логін, якщо `status != ACTIVE` — `PENDING_INVITE`
+   так само блокується, як і `DISABLED`.
+
+Крос-модульна оркестрація (Agent + AccountIdentity) — у platform-app,
+не в жодному з доменних модулів, той самий принцип, що й
+`TenantRegistrationService` (architecture.md §2).
+
+## 10. Відкриті питання
 
 - SSO/OAuth для enterprise-tenant-ів — поза скоупом зараз, можлива Фаза 3.
 - Політика паролів (мінімальна довжина, перевірка проти витоку — напр.

@@ -1,0 +1,122 @@
+{
+  "app": { "name": "Memphisreo" },
+  "nav": {
+    "workflow": "Робота",
+    "people": "Люди",
+    "setup": "Налаштування",
+    "properties": "Об'єкти",
+    "listings": "Лістинги",
+    "agents": "Агенти",
+    "roles": "Ролі",
+    "agencySettings": "Налаштування агенції",
+    "profile": "Профіль",
+    "logout": "Вийти",
+    "language": "Мова",
+    "theme": "Перемкнути тему"
+  },
+  "login": {
+    "title": "Вхід",
+    "email": "Email",
+    "password": "Пароль",
+    "submit": "Увійти",
+    "submitting": "Входимо…",
+    "error": "Не вдалося увійти"
+  },
+  "properties": {
+    "title": "Об'єкти нерухомості",
+    "newButton": "+ Новий об'єкт",
+    "cancelButton": "Скасувати",
+    "loadError": "Не вдалося завантажити об'єкти",
+    "createError": "Не вдалося створити об'єкт",
+    "empty": "Поки що немає жодного об'єкта",
+    "columns": { "type": "Тип", "area": "Площа", "rooms": "Кімнати", "status": "Статус", "id": "ID" },
+    "form": {
+      "type": "Тип",
+      "area": "Площа, м²",
+      "rooms": "Кімнати",
+      "country": "Країна",
+      "city": "Місто",
+      "street": "Вулиця",
+      "houseNumber": "Будинок",
+      "submit": "Створити",
+      "submitting": "Створюємо…"
+    }
+  },
+  "listings": {
+    "title": "Лістинги",
+    "newButton": "+ Новий лістинг",
+    "cancelButton": "Скасувати",
+    "loadError": "Не вдалося завантажити лістинги",
+    "createError": "Не вдалося створити лістинг",
+    "empty": "Поки що немає жодного лістингу",
+    "needProperty": "Спершу додай об'єкт нерухомості на вкладці «Об'єкти».",
+    "columns": { "dealType": "Тип угоди", "price": "Ціна", "status": "Статус", "propertyId": "Property ID" },
+    "form": {
+      "property": "Об'єкт",
+      "dealType": "Тип угоди",
+      "price": "Ціна",
+      "currency": "Валюта",
+      "submit": "Опублікувати",
+      "submitting": "Створюємо…"
+    }
+  },
+  "agents": {
+    "title": "Агенти",
+    "inviteButton": "+ Запросити агента",
+    "cancelButton": "Скасувати",
+    "loadError": "Не вдалося завантажити агентів",
+    "inviteError": "Не вдалося запросити агента",
+    "statusError": "Не вдалося змінити статус",
+    "empty": "Поки що немає інших агентів",
+    "inviteBanner": "Запрошення створено для <bold>{{email}}</bold>. Немає email-розсилки — скопіюй і надішли посилання вручну (діє 7 днів):",
+    "columns": { "name": "Ім'я", "email": "Email", "status": "Статус" },
+    "activate": "Активувати",
+    "deactivate": "Заблокувати",
+    "form": { "firstName": "Ім'я", "lastName": "Прізвище", "email": "Email", "submit": "Запросити" }
+  },
+  "roles": {
+    "title": "Ролі",
+    "newButton": "+ Нова роль",
+    "cancelButton": "Скасувати",
+    "loadError": "Не вдалося завантажити ролі",
+    "createError": "Не вдалося створити роль",
+    "deleteError": "Не вдалося видалити роль",
+    "builtIn": "(вбудована)",
+    "delete": "Видалити",
+    "form": { "name": "Назва ролі", "submit": "Створити роль" },
+    "categories": {
+      "property": "Об'єкти нерухомості",
+      "listings": "Лістинги",
+      "inquiries": "Заявки",
+      "crm": "CRM (ліди та клієнти)",
+      "agents": "Агенти",
+      "roles": "Ролі",
+      "tenantAdmin": "Адміністрування агенції"
+    }
+  },
+  "acceptInvite": {
+    "title": "Встановити пароль",
+    "password": "Новий пароль",
+    "submit": "Активувати акаунт",
+    "submitting": "Зберігаємо…",
+    "error": "Не вдалося прийняти запрошення",
+    "missingToken": "У посиланні відсутній токен запрошення."
+  },
+  "tenantSettings": {
+    "title": "Налаштування агенції",
+    "name": "Назва агенції",
+    "meta": "Країна: {{country}} · Регіон: {{region}} · Статус: {{status}}",
+    "save": "Зберегти",
+    "saved": "Збережено",
+    "loadError": "Не вдалося завантажити налаштування",
+    "saveError": "Не вдалося зберегти",
+    "loading": "Завантаження…"
+  },
+  "profile": {
+    "title": "Мій профіль",
+    "name": "Ім'я",
+    "email": "Email",
+    "status": "Статус",
+    "loadError": "Не вдалося завантажити профіль"
+  }
+}

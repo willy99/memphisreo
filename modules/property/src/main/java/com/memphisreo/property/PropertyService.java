@@ -46,10 +46,16 @@ public class PropertyService {
         property.setAddressId(address.getId());
         property.setUnitNumber(request.unitNumber());
         property.setAreaSqm(request.areaSqm());
+        property.setLandAreaSqm(request.landAreaSqm());
         property.setRooms(request.rooms());
+        property.setBedrooms(request.bedrooms());
+        property.setBathrooms(request.bathrooms());
         property.setFloor(request.floor());
         property.setTotalFloors(request.totalFloors());
         property.setYearBuilt(request.yearBuilt());
+        property.setHasElevator(request.hasElevator());
+        property.setParkingSpaces(request.parkingSpaces());
+        property.setDescription(request.description());
         property.setAttributesJson(request.attributesJson());
         property.setStatus(Property.Status.ACTIVE);
         property.setCreatedByAgentId(agentId);

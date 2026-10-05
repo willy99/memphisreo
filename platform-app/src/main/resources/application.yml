@@ -33,6 +33,11 @@ spring:
     locations: classpath:db/migration/control-plane
     placeholder-replacement: false  # не використовуємо ${...}; уникає false-positive на JSON-контенті в міграціях
 
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
 # Секрети нижче — placeholder-и для локальної розробки, НЕ для прод.
 # Прод: base64-рядок з >=32 байтами ентропії з секрет-менеджера, окремий
 # ключ на tenant-realm і platform-realm — docs/security.md §6.
@@ -40,6 +45,12 @@ memphisreo:
   security:
     tenant-jwt-secret: ${TENANT_JWT_SECRET:ZGV2LW9ubHktdGVuYW50LXNlY3JldC1jaGFuZ2UtbWUtMzJieXRlcyE=}
     platform-jwt-secret: ${PLATFORM_JWT_SECRET:ZGV2LW9ubHktcGxhdGZvcm0tc2VjcmV0LWNoYW5nZS1tZS0zMmJ5dGVzIQ==}
+  storage:
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+    access-key: ${STORAGE_ACCESS_KEY:memphisreo}
+    secret-key: ${STORAGE_SECRET_KEY:memphisreo123}
+    region: us-east-1
+    documents-bucket: memphisreo-documents
 
 management:
   endpoints:

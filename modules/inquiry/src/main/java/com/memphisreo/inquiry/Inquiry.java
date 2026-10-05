@@ -48,6 +48,10 @@ public class Inquiry {
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    /** Захист від подвійної конвертації в кілька лідів — docs/domain-model.md §5. */
+    @Column(name = "converted_to_lead_id")
+    private UUID convertedToLeadId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

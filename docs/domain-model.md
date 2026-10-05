@@ -202,7 +202,7 @@ erDiagram
   месенджера, збереженого пошуку/обраного користувача — усе за скоупом
   Фази 1 з business-plan.md §7.
 
-## 4. Рішення: формат `COUNTRY.required_property_fields`
+## 4. Рішення: формат property-схеми (уточнено у Фазі 3, §6.1)
 
 **JSON Schema** (json-schema.org), не власний DSL.
 
@@ -232,13 +232,235 @@ erDiagram
 
 **Рішення:** редагування — через окрему адмін-форму поверх схеми, не
 напряму в JSON. Мотивація — зміни (нова країна, нове обов'язкове поле)
-мають діяти "на гарячу", без редеплою; оскільки `required_property_fields`
-вже зберігається в БД (control plane, JSONB), адмін-форма — це UI-шар,
-що робить `UPDATE` цього рядка, змін в архітектурі це не вимагає. Коли
-саме будувати цю форму (Фаза 1 чи пізніше) — не вирішено, перші кілька
-країн можна завести напряму в БД без UI.
+мають діяти "на гарячу", без редеплою; адмін-форма — це UI-шар, що
+робить `UPDATE` рядка в БД, змін в архітектурі це не вимагає.
 
-## 5. Інші відкриті питання моделі
+**Уточнено у Фазі 3 (§6.1): ключ схеми — не сама країна, а пара
+(country, propertyType).** Квартира й будинок у тій самій країні мають
+різні обов'язкові поля — одна схема на країну цього не покриває.
+
+## 5. Фаза 2 — CRM (Client, Lead)
+
+`Inquiry` із Фази 1 (§3) був навмисно "сирим сигналом" без статусної
+машини — саме тут це переростає у повноцінний CRM.
+
+```mermaid
+erDiagram
+    CLIENT ||--o{ LEAD : "один клієнт — багато лідів"
+    LEAD ||--o{ LEAD_ACTIVITY : "нотатки/історія"
+
+    CLIENT {
+        uuid id PK
+        string first_name
+        string last_name
+        string email
+        string phone "nullable"
+        enum source "WEBSITE_INQUIRY/REFERRAL/ADVERTISEMENT/WALK_IN/OTHER"
+        text notes "nullable"
+        uuid tenant_id
+        timestamp created_at
+    }
+
+    LEAD {
+        uuid id PK
+        uuid client_id FK
+        uuid listing_id "nullable, сире посилання — модуль listing"
+        uuid assigned_agent_id "сире посилання — модуль agent"
+        uuid source_inquiry_id "nullable — звідки утворився лід"
+        enum status "NEW/CONTACTED/QUALIFIED/VIEWING_SCHEDULED/NEGOTIATING/WON/LOST"
+        timestamp next_follow_up_at "nullable — нагадування агенту"
+        uuid tenant_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    LEAD_ACTIVITY {
+        uuid id PK
+        uuid lead_id FK
+        uuid agent_id "хто лишив нотатку"
+        text note
+        timestamp created_at
+    }
+```
+
+**`Client` не має власного публічного API створення** — заводиться лише
+як побічний ефект конвертації `Inquiry` → `Lead` (dedup за email у межах
+tenant). Свідоме звуження скоупу: окремий "додати клієнта вручну" —
+не Фаза 2 MVP, легко додати пізніше без зміни моделі.
+
+**`Inquiry` отримує `converted_to_lead_id` (nullable)** — захист від
+подвійної конвертації одного inquiry в кілька лідів. Модуль `inquiry`
+у Фазі 1 мав лише сутність без repository/service/controller — Фаза 2
+добудовує це як передумову для конвертації.
+
+**Чому `LEAD_ACTIVITY` окремою таблицею, а не полем `notes` на `LEAD`:**
+CRM без історії "хто і коли що написав" — це занотована, не CRM;
+вартість окремої таблиці тут мінімальна порівняно з втратою history.
+
+### Наслідок для вже існуючих tenant-ів
+
+Tenant-и, зареєстровані до цієї зміни, мають "заморожену" на момент
+реєстрації tenant-схему і набір permission-ів у вбудованих ролях
+(`TENANT_ADMIN`/`AGENT`) — нові CRM-таблиці й нові `Permission`-коди
+самі по собі до них не долетять. Розв'язано `TenantMaintenanceRunner`
+(architecture.md §3 доповнено) — на старті застосунку донаганяє Flyway
+по всіх tenant-схемах і донараховує нові permission-и вбудованим ролям,
+**тільки додаючи**, ніколи не видаляючи те, що tenant admin міг
+кастомізувати вручну.
+
+## 6. Фаза 3 — повний воркфлоу угоди (дослідження + модель)
+
+Дослідження зовнішніх джерел (RESO Data Dictionary, стандартний
+real-estate closing workflow, перелік документів для продажу нерухомості
+в Україні — деталі й посилання в чаті) показало: `Lead.status`, що
+закінчується на `WON`/`LOST`, покриває лише "лід → кваліфікація".
+Реальний процес продовжується показом, офером, торгом, договором і
+реєстрацією прав — три відсутні сутності, не деталі одного статусу.
+
+```mermaid
+erDiagram
+    LEAD ||--o{ SHOWING : "покази"
+    LEAD ||--o{ OFFER : "пропозиції ціни"
+    LEAD ||--o| DEAL : "виграний лід → угода"
+    PROPERTY ||--o{ DOCUMENT : "техпаспорт, витяг, оцінка..."
+    DEAL ||--o{ DOCUMENT : "договір купівлі-продажу"
+
+    SHOWING {
+        uuid id PK
+        uuid lead_id FK
+        uuid listing_id "не з lead — лід міг цікавитись кількома лістингами"
+        uuid agent_id
+        timestamp scheduled_at
+        enum status "SCHEDULED/COMPLETED/CANCELLED/NO_SHOW"
+        text notes "nullable, фідбек після показу"
+        uuid tenant_id
+        timestamp created_at
+    }
+
+    OFFER {
+        uuid id PK
+        uuid lead_id FK
+        uuid listing_id
+        numeric amount
+        string currency
+        enum status "PENDING/ACCEPTED/REJECTED/COUNTERED/WITHDRAWN"
+        uuid parent_offer_id "nullable — ланцюжок контр-пропозицій"
+        timestamp valid_until "nullable"
+        uuid tenant_id
+        timestamp created_at
+    }
+
+    DEAL {
+        uuid id PK
+        uuid lead_id FK
+        uuid listing_id
+        uuid buyer_client_id "денормалізовано з lead.client_id"
+        uuid agent_id
+        numeric final_price
+        string currency
+        enum status "CONTRACT_PENDING/CONTRACT_SIGNED/REGISTERED/CLOSED/CANCELLED"
+        timestamp contract_signed_at "nullable"
+        timestamp closed_at "nullable"
+        uuid tenant_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    DOCUMENT {
+        uuid id PK
+        uuid property_id FK "завжди — навіть deal-документ прив'язаний до об'єкта"
+        uuid deal_id "nullable — заповнено для документів конкретної угоди"
+        enum type "TECHNICAL_PASSPORT/TITLE_DEED/REGISTRY_EXTRACT/APPRAISAL_REPORT/RESIDENTS_CERTIFICATE/FLOOR_PLAN/SALE_CONTRACT/INSPECTION_ACT/OTHER"
+        string file_url "object storage"
+        timestamp valid_until "nullable — звіт про оцінку діє 6 міс тощо"
+        enum visibility "AGENCY_INTERNAL/LISTING_AGENT_AND_LAWYER/PUBLIC"
+        uuid uploaded_by_agent_id
+        uuid tenant_id
+        timestamp created_at
+    }
+```
+
+**`DOCUMENT.type` — не абстракція, а конкретний перелік з українського
+законодавства**, знайдений дослідженням: технічний паспорт,
+правовстановлюючий документ, витяг з Державного реєстру речових прав,
+звіт про оцінку, довідка про зареєстрованих осіб — плюс технічні
+(floor plan) і транзакційні (сам договір купівлі-продажу).
+
+**`DOCUMENT.visibility` замикає ідею з бізнес-плану** ("правовстановлюючі
+документи бачить лише лістер + юрист агенції") **без нового механізму
+RBAC** — досить нового permission-коду (напр. `DOCUMENT_VIEW_CONFIDENTIAL`),
+призначюваного через уже існуючу систему кастомних ролей (security.md §3):
+tenant admin створює роль "Юрист", видає їй цей permission, призначає
+потрібному агенту. Перевірка на рівні сервісу: `agent == listing.agentId
+|| hasAuthority(DOCUMENT_VIEW_CONFIDENTIAL)` — той самий патерн
+"RBAC для типу дії, ownership-перевірка для конкретного екземпляра",
+уже задокументований у security.md §3.
+
+**`DOCUMENT.valid_until`** закриває ідею з нагадуваннями про
+протермінування — сам механізм нагадувань (scheduled job + доставка)
+не спроєктовано, це окрема інфраструктурна передумова (email/push),
+якої ще немає.
+
+**Чому `Showing`/`Offer` окремі сутності, а не поля на `Lead`:** лід
+може мати кілька показів (повторний перегляд) і кілька пропозицій
+(торг) — це історія з датами й статусами кожного окремого запису, не
+один поточний стан. Той самий принцип, що обґрунтував окрему
+`LEAD_ACTIVITY` замість поля `notes` (§5).
+
+**Чому `Deal` — окрема сутність, не просто `Lead.status = WON`:** угода
+має власний життєвий цикл (договір → реєстрація прав → закриття) з
+власними датами й документами, що триває вже ПІСЛЯ того, як лід
+"виграний". Змішування двох життєвих циклів в одному record — та сама
+помилка, якої вже уникли з `Inquiry` vs `Lead` у Фазі 2.
+
+**Наслідок для `PROPERTY`/`LISTING`:** коли `DEAL.status → CLOSED`,
+`LISTING.status → CLOSED`, `PROPERTY.status → SOLD`/`RENTED` (залежно
+від `LISTING.dealType`) — оркеструється сервісом, не тригером у БД,
+той самий підхід, що і скрізь у проєкті.
+
+### 6.1 Property-конфігурація: тип, не тільки країна
+
+Дослідження (RESO property types, ImmoScout24/Idealista field schemas)
+підтвердило: квартира, будинок, земельна ділянка й комерція мають
+принципово різні набори полів навіть у межах однієї країни. Ключ
+`required_property_fields` (§4) міняється з `country_code` на пару
+`(country_code, property_type)` — окрема таблиця `property_type_schema`
+у control plane замість поля на `COUNTRY`.
+
+**Частина полів переходить із `PROPERTY.attributes` (JSONB) у реальні
+типізовані колонки** — не тому, що JSONB "гірший", а тому, що це саме
+ті поля, за якими шукатимуть публічно (Фаза 3, публічний пошук —
+відкрите питання ще з Фази 1): `bedrooms`, `bathrooms`, `land_area_sqm`
+(площа ділянки — окремо від `area_sqm`, площі будівлі), `has_elevator`,
+`parking_spaces`. Range-запити ("від 2 спалень", "до $100k") по
+типізованих nullable-колонках — простіше й швидше, ніж по JSONB, навіть
+з GIN-індексом. Це узгоджується з тим, як сам RESO Data Dictionary
+моделює `Property` — одна широка таблиця зі спільними колонками для
+всіх типів, nullable там, де тип не застосовується, а не окрема
+таблиця на кожен тип. Усе інше (юридичне, рідкісне, дуже
+country/type-специфічне — матеріал стін, тип покрівлі, приєднання
+комунікацій) лишається в `attributes` JSONB під схемою.
+
+**Модульне розміщення:** `Showing`/`Offer`/`Deal` — розширення модуля
+`crm` (той самий агрегат "що відбувається з лідом"), не новий модуль —
+поки нема реальної причини ділити (architecture.md §5). `Document` —
+власний модуль з першого дня: по-перше, заявлений масштаб Фази 3
+(шаблони, е-підпис) виправдає межу дуже швидко; по-друге, кожна країна
+матиме свій список обов'язкових типів документів, власну валідацію і,
+можливо, парсинг завантажених файлів (витягувати деталі об'єкта з
+техпаспорта при завантаженні) — це вже зараз досить власної логіки,
+щоб не ховати її всередині `property`.
+
+### 6.2 Пошук — крос-tenant індекс
+
+Публічний пошук по практично всіх полях, швидкий навіть при великій
+кількості об'єктів — вимагає окремої, не tenant-scoped схеми `search`,
+куди `ListingService` явно синхронізує дані при публікації лістингу.
+Повний дизайн, обґрунтування вибору PostgreSQL замість Elasticsearch
+на цьому етапі, і причина, чому це взагалі окрема проблема при
+schema-per-tenant — [architecture.md §8](architecture.md).
+
+## 7. Інші відкриті питання моделі
 
 - Видалення tenant-а (GDPR right to erasure, architecture.md §5 control
   plane) — при schema-per-tenant це `DROP SCHEMA`, але потребує процесу

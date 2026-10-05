@@ -14,7 +14,11 @@
     <artifactId>search</artifactId>
     <packaging>jar</packaging>
     <name>Memphisreo :: Search</name>
-    <description>Публічний пошук/фільтри над Property+Listing — PostgreSQL full-text/PostGIS у Фазі 1, кандидат на Elasticsearch у Фазі 2 (docs/architecture.md §6)</description>
+    <description>
+        Крос-tenant денормалізований пошуковий індекс — PostgreSQL у Фазі 3,
+        Elasticsearch/OpenSearch — заміна за інтерфейсом SearchIndexer, коли
+        конкретний обсяг це виправдає. docs/architecture.md §8.
+    </description>
 
     <dependencies>
         <dependency>
@@ -26,9 +30,18 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-spatial</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 </project>

@@ -19,7 +19,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class AccountIdentity {
 
-    public enum Status { ACTIVE, DISABLED }
+    public enum Status { PENDING_INVITE, ACTIVE, DISABLED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,7 +28,8 @@ public class AccountIdentity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    /** Nullable до прийняття запрошення (status=PENDING_INVITE) — docs/security.md §9. */
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "tenant_id", nullable = false)
@@ -53,6 +54,12 @@ public class AccountIdentity {
 
     @Column(name = "two_factor_recovery_codes")
     private String twoFactorRecoveryCodes;
+
+    @Column(name = "invite_token")
+    private String inviteToken;
+
+    @Column(name = "invite_expires_at")
+    private Instant inviteExpiresAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();

@@ -1,0 +1,122 @@
+{
+  "app": { "name": "Memphisreo" },
+  "nav": {
+    "workflow": "Workflow",
+    "people": "People",
+    "setup": "Setup",
+    "properties": "Properties",
+    "listings": "Listings",
+    "agents": "Agents",
+    "roles": "Roles",
+    "agencySettings": "Agency settings",
+    "profile": "Profile",
+    "logout": "Log out",
+    "language": "Language",
+    "theme": "Toggle light / dark"
+  },
+  "login": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "error": "Could not sign in"
+  },
+  "properties": {
+    "title": "Properties",
+    "newButton": "New property",
+    "cancelButton": "Cancel",
+    "loadError": "Could not load properties",
+    "createError": "Could not create property",
+    "empty": "No properties yet",
+    "columns": { "type": "Type", "area": "Area", "rooms": "Rooms", "status": "Status", "id": "ID" },
+    "form": {
+      "type": "Type",
+      "area": "Area, m²",
+      "rooms": "Rooms",
+      "country": "Country",
+      "city": "City",
+      "street": "Street",
+      "houseNumber": "House number",
+      "submit": "Create",
+      "submitting": "Creating…"
+    }
+  },
+  "listings": {
+    "title": "Listings",
+    "newButton": "New listing",
+    "cancelButton": "Cancel",
+    "loadError": "Could not load listings",
+    "createError": "Could not create listing",
+    "empty": "No listings yet",
+    "needProperty": "Add a property on the Properties tab first.",
+    "columns": { "dealType": "Deal type", "price": "Price", "status": "Status", "propertyId": "Property ID" },
+    "form": {
+      "property": "Property",
+      "dealType": "Deal type",
+      "price": "Price",
+      "currency": "Currency",
+      "submit": "Publish",
+      "submitting": "Creating…"
+    }
+  },
+  "agents": {
+    "title": "Agents",
+    "inviteButton": "Invite agent",
+    "cancelButton": "Cancel",
+    "loadError": "Could not load agents",
+    "inviteError": "Could not invite agent",
+    "statusError": "Could not change status",
+    "empty": "No other agents yet",
+    "inviteBanner": "Invite created for <bold>{{email}}</bold>. There's no email delivery yet — copy and send the link yourself (valid 7 days):",
+    "columns": { "name": "Name", "email": "Email", "status": "Status" },
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "form": { "firstName": "First name", "lastName": "Last name", "email": "Email", "submit": "Invite" }
+  },
+  "roles": {
+    "title": "Roles",
+    "newButton": "New role",
+    "cancelButton": "Cancel",
+    "loadError": "Could not load roles",
+    "createError": "Could not create role",
+    "deleteError": "Could not delete role",
+    "builtIn": "(built-in)",
+    "delete": "Delete",
+    "form": { "name": "Role name", "submit": "Create role" },
+    "categories": {
+      "property": "Property",
+      "listings": "Listings",
+      "inquiries": "Inquiries",
+      "crm": "CRM (leads & clients)",
+      "agents": "Agents",
+      "roles": "Roles",
+      "tenantAdmin": "Tenant admin"
+    }
+  },
+  "acceptInvite": {
+    "title": "Set your password",
+    "password": "New password",
+    "submit": "Activate account",
+    "submitting": "Saving…",
+    "error": "Could not accept invite",
+    "missingToken": "This link is missing an invite token."
+  },
+  "tenantSettings": {
+    "title": "Agency settings",
+    "name": "Agency name",
+    "meta": "Country: {{country}} · Region: {{region}} · Status: {{status}}",
+    "save": "Save",
+    "saved": "Saved",
+    "loadError": "Could not load settings",
+    "saveError": "Could not save",
+    "loading": "Loading…"
+  },
+  "profile": {
+    "title": "My profile",
+    "name": "Name",
+    "email": "Email",
+    "status": "Status",
+    "loadError": "Could not load profile"
+  }
+}

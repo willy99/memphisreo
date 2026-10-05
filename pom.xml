@@ -20,6 +20,7 @@
         <totp.version>1.7.1</totp.version>
         <lombok.version>1.18.34</lombok.version>
         <testcontainers.version>2.0.5</testcontainers.version>
+        <aws-sdk.version>2.53.2</aws-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -35,12 +36,42 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- S3-сумісний object storage (MinIO зараз, AWS S3 пізніше без
+                 зміни коду) — docs/architecture.md §7. -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- AWS SDK BOM не керує голим httpclient5 (лише своїм apache5-client
+                 модулем) — без цього перемагає версія 5.3.1 зі spring-boot-dependencies,
+                 у якій ще немає TlsSocketStrategy (NoClassDefFoundError при
+                 інстанціюванні S3Client). AWS SDK 2.53.2 очікує httpclient5 5.6.x,
+                 який своєю чергою тягне httpcore5 5.4.3 — Spring Boot тримає
+                 httpcore5 на 5.2.5 (NoSuchMethodError без цього пін'а). -->
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>5.6.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5</artifactId>
+                <version>5.4.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5-h2</artifactId>
+                <version>5.4.3</version>
             </dependency>
 
             <!-- Модулі платформи (docs/architecture.md §2) -->
@@ -89,6 +120,16 @@
                 <artifactId>inquiry</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.memphisreo</groupId>
+                <artifactId>crm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.memphisreo</groupId>
+                <artifactId>document</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- TOTP (RFC 6238) для 2FA — docs/security.md §5 -->
             <dependency>
@@ -135,6 +176,8 @@
         <module>modules/media</module>
         <module>modules/search</module>
         <module>modules/inquiry</module>
+        <module>modules/crm</module>
+        <module>modules/document</module>
         <module>platform-app</module>
     </modules>
 </project>

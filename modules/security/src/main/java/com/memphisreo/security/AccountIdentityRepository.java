@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface AccountIdentityRepository extends JpaRepository<AccountIdentity, UUID> {
 
     Optional<AccountIdentity> findByEmail(String email);
+
+    Optional<AccountIdentity> findByInviteToken(String inviteToken);
 }

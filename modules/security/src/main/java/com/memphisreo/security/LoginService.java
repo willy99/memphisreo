@@ -17,8 +17,10 @@ import java.util.Set;
 /**
  * Логін tenant-агента. Permissions читаються з tenant-схеми — TenantContext
  * тут виставляється ВРУЧНУ (немає ще JWT на цьому кроці), не через
- * JWT-фільтр. Це єдине легітимне місце для ручного TenantContext поза
- * request-scoped фільтром. docs/security.md §4.
+ * JWT-фільтр. Легітимний ручний TenantContext поза request-scoped
+ * фільтром — тут і в будь-якому іншому public-ендпоїнті, що резолвить
+ * tenant за slug з path (напр. PublicInquiryController), а не з JWT.
+ * docs/security.md §4.
  */
 @Service
 public class LoginService {

@@ -53,6 +53,14 @@
             <groupId>com.memphisreo</groupId>
             <artifactId>inquiry</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.memphisreo</groupId>
+            <artifactId>crm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.memphisreo</groupId>
+            <artifactId>document</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

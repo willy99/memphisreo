@@ -31,14 +31,20 @@ async function request<T>(path: string, options: RequestInit & { token?: string 
     throw new ApiError(response.status, message || response.statusText);
   }
 
-  if (response.status === 204) {
+  // 204, або 200 з порожнім тілом (напр. ResponseEntity.ok().build()) —
+  // response.json() на порожньому рядку кидає parse-помилку.
+  const text = await response.text();
+  if (!text) {
     return undefined as T;
   }
-  return response.json() as Promise<T>;
+  return JSON.parse(text) as T;
 }
 
 export const api = {
   get: <T>(path: string, token: string) => request<T>(path, { method: "GET", token }),
   post: <T>(path: string, body: unknown, token?: string) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body), token }),
+  patch: <T>(path: string, body: unknown, token: string) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(body), token }),
+  del: <T>(path: string, token: string) => request<T>(path, { method: "DELETE", token }),
 };

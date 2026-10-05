@@ -1,11 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { api, ApiError } from "../api/client";
 import type { CreateListingRequest, DealType, Listing, Property } from "../api/types";
+import { StatusPill } from "../components/StatusPill";
 
 const DEAL_TYPES: DealType[] = ["SALE", "LONG_TERM_RENT", "SHORT_TERM_RENT"];
 
 export function ListingsPage() {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -22,7 +25,7 @@ export function ListingsPage() {
       setListings(listingsResult);
       setProperties(propertiesResult);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Не вдалося завантажити лістинги");
+      setError(err instanceof ApiError ? err.message : t("listings.loadError"));
     }
   }
 
@@ -34,13 +37,13 @@ export function ListingsPage() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Лістинги</h1>
+        <h1>{t("listings.title")}</h1>
         <button onClick={() => setShowForm((v) => !v)} disabled={properties.length === 0}>
-          {showForm ? "Скасувати" : "+ Новий лістинг"}
+          {showForm ? t("listings.cancelButton") : t("listings.newButton")}
         </button>
       </div>
 
-      {properties.length === 0 && <p className="hint">Спершу додай об'єкт нерухомості на вкладці "Об'єкти".</p>}
+      {properties.length === 0 && <p className="hint">{t("listings.needProperty")}</p>}
       {error && <p className="error">{error}</p>}
 
       {showForm && token && (
@@ -57,26 +60,28 @@ export function ListingsPage() {
       <table className="table">
         <thead>
           <tr>
-            <th>Тип угоди</th>
-            <th>Ціна</th>
-            <th>Статус</th>
-            <th>Property ID</th>
+            <th>{t("listings.columns.dealType")}</th>
+            <th>{t("listings.columns.price")}</th>
+            <th>{t("listings.columns.status")}</th>
+            <th>{t("listings.columns.propertyId")}</th>
           </tr>
         </thead>
         <tbody>
           {listings.map((l) => (
             <tr key={l.id}>
               <td>{l.dealType}</td>
-              <td>
+              <td className="num">
                 {l.price.toLocaleString()} {l.currency}
               </td>
-              <td>{l.status}</td>
+              <td>
+                <StatusPill status={l.status} />
+              </td>
               <td className="mono">{l.propertyId}</td>
             </tr>
           ))}
           {listings.length === 0 && (
             <tr>
-              <td colSpan={4}>Поки що немає жодного лістингу</td>
+              <td colSpan={4}>{t("listings.empty")}</td>
             </tr>
           )}
         </tbody>
@@ -94,6 +99,7 @@ function CreateListingForm({
   properties: Property[];
   onCreated: () => void;
 }) {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -112,7 +118,7 @@ function CreateListingForm({
       await api.post<void>("/api/listings", request, token);
       onCreated();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Не вдалося створити лістинг");
+      setError(err instanceof ApiError ? err.message : t("listings.createError"));
     } finally {
       setSubmitting(false);
     }
@@ -121,7 +127,7 @@ function CreateListingForm({
   return (
     <form onSubmit={handleSubmit} className="form form-inline">
       <label>
-        Об'єкт
+        {t("listings.form.property")}
         <select name="propertyId" required>
           {properties.map((p) => (
             <option key={p.id} value={p.id}>
@@ -131,26 +137,26 @@ function CreateListingForm({
         </select>
       </label>
       <label>
-        Тип угоди
+        {t("listings.form.dealType")}
         <select name="dealType" defaultValue="SALE">
-          {DEAL_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
+          {DEAL_TYPES.map((dealType) => (
+            <option key={dealType} value={dealType}>
+              {dealType}
             </option>
           ))}
         </select>
       </label>
       <label>
-        Ціна
+        {t("listings.form.price")}
         <input name="price" type="number" step="0.01" required />
       </label>
       <label>
-        Валюта
+        {t("listings.form.currency")}
         <input name="currency" defaultValue="USD" maxLength={3} required />
       </label>
       {error && <p className="error">{error}</p>}
       <button type="submit" disabled={submitting}>
-        {submitting ? "Створюємо…" : "Опублікувати"}
+        {submitting ? t("listings.form.submitting") : t("listings.form.submit")}
       </button>
     </form>
   );
