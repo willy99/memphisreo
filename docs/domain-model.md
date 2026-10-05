@@ -1,11 +1,15 @@
-# Memphisreo — доменна модель Фази 1
+# Memphisreo — доменна модель
 
-*Статус: чернетка v0.1, дата: 2026-08-15. Доповнює [business-plan.md](business-plan.md)
+*Статус: чернетка v0.2, оновлено 2026-10-05 (ADR-001, скоуп Фази 1 — §6).
+Перша версія — 2026-08-15. Доповнює [business-plan.md](business-plan.md)
 та [architecture.md](architecture.md).*
 
 Модель розділена на дві площини відповідно до architecture.md §3:
 **control plane** (спільна схема, знає про всіх tenant-ів) і **tenant
-plane** (schema-per-tenant, повторюється для кожної агенції).
+plane** (спільні таблиці з `tenant_id` під RLS — [ADR-001](adr/001-shared-schema-rls-cells.md)).
+
+> Заголовок §5 "Фаза 2" історичний. Актуальний поділ на фази —
+> business-plan.md §7: CRM-ядро (§5) і воркфлоу продажу (§6) входять у Фазу 1.
 
 ## 1. Control plane
 
@@ -19,8 +23,8 @@ erDiagram
         string name
         string slug "subdomain, unique"
         string country_code FK
-        string region "EU / UA — де живе tenant-схема"
-        string schema_name "фізична schema в regional-кластері"
+        string region "EU / UA"
+        string cell "комірка (PostgreSQL-кластер) з даними tenant-а — ADR-001"
         enum status "TRIAL/ACTIVE/SUSPENDED/CHURNED"
         string subscription_plan
         timestamp created_at
@@ -40,7 +44,7 @@ erDiagram
         string email UK "глобально унікальний, для логіну"
         string password_hash "Argon2id"
         uuid tenant_id FK
-        uuid agent_id "посилання в tenant-схему, не FK (інша БД/schema)"
+        uuid agent_id "посилання в tenant plane, не FK (інший кластер/комірка)"
         enum status "ACTIVE/DISABLED"
         int token_version "інкремент = миттєвий logout усіх токенів"
         boolean two_factor_enabled
@@ -51,13 +55,13 @@ erDiagram
 ```
 
 **Навіщо `ACCOUNT_IDENTITY` окремо від `AGENT`:** логін відбувається до
-того, як відомо, у чиїй tenant-схемі шукати профіль (email → tenant_id —
+того, як відомо, якого tenant-а (і яку комірку) обслуговує запит (email → tenant_id —
 саме ця резолюція описана в architecture.md §3 "Резолюція tenant з
-запиту"). Профіль агента (ім'я, ліцензія) лишається в tenant-схемі разом
+запиту"). Профіль агента (ім'я, ліцензія) лишається в tenant plane разом
 з рештою його даних; **ролі й дозволи агента — окрема RBAC-модель**,
 див. [security.md §3](security.md).
 
-## 2. Tenant plane (повторюється в кожній tenant-схемі)
+## 2. Tenant plane (спільні таблиці з `tenant_id`, RLS)
 
 ```mermaid
 erDiagram
@@ -188,10 +192,10 @@ erDiagram
   poi.geo_location, radius)`. Збіг за вулицею/районом свідомо не
   використовується як механізм "поруч" — довга вулиця чи різні боки
   перехрестя дають хибні результати порівняно з точною відстанню.
-- **`tenant_id` присутній навіть у tenant-схемі**, попри те, що ізоляція
-  вже забезпечена самою схемою — це навмисна надлишковість під Row-Level
-  Security як другий рубіж захисту (architecture.md §6), а не помилка
-  дизайну.
+- **`tenant_id` — у кожній tenant-scoped таблиці, частина первинного
+  ключа `(tenant_id, id)` і всіх FK.** Основа RLS-ізоляції й захист від
+  посилань на чужі записи (ADR-001). На ER-діаграмах для стислості
+  показано лише `id`.
 - **`INQUIRY` — мінімальна форма Фази 1**, свідомо без статусної машини
   угоди й без прив'язки до окремого `Client`-агрегату: повноцінний CRM
   (`Client`/`Lead` з business-plan.md §4) — Фаза 2. `INQUIRY` тут — це
@@ -202,7 +206,7 @@ erDiagram
   месенджера, збереженого пошуку/обраного користувача — усе за скоупом
   Фази 1 з business-plan.md §7.
 
-## 4. Рішення: формат property-схеми (уточнено у Фазі 3, §6.1)
+## 4. Рішення: формат property-схеми (уточнено в §6.7)
 
 **JSON Schema** (json-schema.org), не власний DSL.
 
@@ -235,7 +239,7 @@ erDiagram
 мають діяти "на гарячу", без редеплою; адмін-форма — це UI-шар, що
 робить `UPDATE` рядка в БД, змін в архітектурі це не вимагає.
 
-**Уточнено у Фазі 3 (§6.1): ключ схеми — не сама країна, а пара
+**Уточнено в §6.7: ключ схеми — не сама країна, а пара
 (country, propertyType).** Квартира й будинок у тій самій країні мають
 різні обов'язкові поля — одна схема на країну цього не покриває.
 
@@ -297,81 +301,167 @@ tenant). Свідоме звуження скоупу: окремий "дода�
 CRM без історії "хто і коли що написав" — це занотована, не CRM;
 вартість окремої таблиці тут мінімальна порівняно з втратою history.
 
-### Наслідок для вже існуючих tenant-ів
+### Зміни для Фази 1 (2026-10-05)
 
-Tenant-и, зареєстровані до цієї зміни, мають "заморожену" на момент
-реєстрації tenant-схему і набір permission-ів у вбудованих ролях
-(`TENANT_ADMIN`/`AGENT`) — нові CRM-таблиці й нові `Permission`-коди
-самі по собі до них не долетять. Розв'язано `TenantMaintenanceRunner`
-(architecture.md §3 доповнено) — на старті застосунку донаганяє Flyway
-по всіх tenant-схемах і донараховує нові permission-и вбудованим ролям,
-**тільки додаючи**, ніколи не видаляючи те, що tenant admin міг
-кастомізувати вручну.
+- **`Client` — універсальний контакт** (покупець і продавець — роль у
+  контексті, не тип запису): продавець — через `LISTING.seller_client_id`,
+  покупець — через `SHOWING`/`OFFER`/`DEAL`. Один контакт може бути
+  обома (продає одну квартиру, купує іншу).
+- **Ручне створення контакту** — так, у Фазі 1 (агент заводить продавця
+  з дзвінка; "тільки з inquiry" недостатньо). Dedup — за email або
+  телефоном у межах tenant-а; email стає nullable.
+- `TenantMaintenanceRunner` (донаганяв міграції по tenant-схемах) після
+  ADR-001 не потрібен: міграції одні на комірку, а нові permission-и
+  вбудованим ролям додаються міграцією даних, **тільки додаючи**.
 
-## 6. Фаза 3 — повний воркфлоу угоди (дослідження + модель)
+## 6. Воркфлоу продажу: лістинг → покази → офери → угода (Фаза 1)
 
 Дослідження зовнішніх джерел (RESO Data Dictionary, стандартний
 real-estate closing workflow, перелік документів для продажу нерухомості
-в Україні — деталі й посилання в чаті) показало: `Lead.status`, що
-закінчується на `WON`/`LOST`, покриває лише "лід → кваліфікація".
-Реальний процес продовжується показом, офером, торгом, договором і
-реєстрацією прав — три відсутні сутності, не деталі одного статусу.
+в Україні) показало: `Lead.status`, що закінчується на `WON`/`LOST`,
+покриває лише "лід → кваліфікація". Реальний процес продовжується
+показом, офером, торгом, договором і реєстрацією прав.
+
+**Скоуп Фази 1 — базовий рівень, без глибини під конкретну країну чи
+клієнта.** Усе, що залежить від процесу конкретної агенції, —
+конфігурація (шаблон чекліста), не код. Поза Фазою 1: синхронізація
+календарів, SMS/email-нагадування, структуровані умови оферу,
+е-підпис/Дія, шаблони договорів, рахунки й платежі.
+
+### 6.0 Життєвий цикл лістингу
+
+Комерційний стан живе на `LISTING`, не на `PROPERTY`: той самий об'єкт
+може бути проданий, а згодом виставлений знову (новий власник, новий
+лістинг). `PROPERTY.status` спрощується до `ACTIVE/ARCHIVED` (стан
+картки фізичного об'єкта).
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> ACTIVE: публікація (гейт готовності)
+    ACTIVE --> UNDER_OFFER: офер прийнято → відкрито угоду
+    UNDER_OFFER --> ACTIVE: угоду скасовано
+    UNDER_OFFER --> SOLD: угоду закрито
+    ACTIVE --> WITHDRAWN: зняти з продажу
+    WITHDRAWN --> ACTIVE: повернути
+    ACTIVE --> EXPIRED: мандат закінчився
+    EXPIRED --> ACTIVE: мандат продовжено
+    SOLD --> [*]
+```
+
+- **Гейт готовності `DRAFT → ACTIVE`** (перевіряє сервіс, порушення
+  повертаються списком): обов'язкові поля за JSON Schema (country, type),
+  ціна, продавець, мінімум N фото (N — налаштування агенції, дефолт 5),
+  заповнені поля мандату. Окремого стану `READY` немає — без процесу
+  погодження менеджером він нічого не додає; з'явиться, якщо агенції
+  попросять review перед публікацією.
+- **Мандат (договір з продавцем) — поля на `LISTING`**, не окрема сутність
+  у Фазі 1: `mandate_type` (EXCLUSIVE/NON_EXCLUSIVE), `mandate_valid_until`,
+  `commission_percent` або `commission_fixed`. `ACTIVE → EXPIRED` —
+  щоденний scheduled job.
+- Кожен перехід — метод сервісу з перевіркою допустимості й записом у
+  таймлайн (§6.4); жодних тригерів у БД.
 
 ```mermaid
 erDiagram
-    LEAD ||--o{ SHOWING : "покази"
-    LEAD ||--o{ OFFER : "пропозиції ціни"
-    LEAD ||--o| DEAL : "виграний лід → угода"
+    LISTING ||--o{ SHOWING : "покази"
+    LISTING ||--o{ OFFER : "пропозиції ціни"
+    LISTING ||--o{ DEAL : "угоди (одна відкрита одночасно)"
+    CLIENT ||--o{ SHOWING : "покупець"
+    CLIENT ||--o{ OFFER : "покупець"
+    OFFER ||--o| DEAL : "прийнятий офер → угода"
+    DEAL ||--o{ DEAL_STEP : "чекліст"
+    DEAL_CHECKLIST_TEMPLATE ||--o{ DEAL_CHECKLIST_TEMPLATE_ITEM : "кроки"
     PROPERTY ||--o{ DOCUMENT : "техпаспорт, витяг, оцінка..."
     DEAL ||--o{ DOCUMENT : "договір купівлі-продажу"
 
     SHOWING {
         uuid id PK
-        uuid lead_id FK
-        uuid listing_id "не з lead — лід міг цікавитись кількома лістингами"
+        uuid listing_id FK
+        uuid client_id FK "покупець"
+        uuid lead_id "nullable — показ буває без ліда (дзвінок, з вулиці)"
         uuid agent_id
         timestamp scheduled_at
+        int duration_minutes
         enum status "SCHEDULED/COMPLETED/CANCELLED/NO_SHOW"
-        text notes "nullable, фідбек після показу"
+        int interest_level "nullable, 1-5 — фідбек після показу"
+        text feedback "nullable"
         uuid tenant_id
         timestamp created_at
     }
 
     OFFER {
         uuid id PK
-        uuid lead_id FK
-        uuid listing_id
+        uuid listing_id FK
+        uuid client_id FK "покупець"
+        uuid lead_id "nullable"
+        uuid parent_offer_id "nullable — ланцюжок контр-пропозицій"
+        enum party "BUYER/SELLER — хто пропонує (контр-офер від продавця)"
         numeric amount
         string currency
-        enum status "PENDING/ACCEPTED/REJECTED/COUNTERED/WITHDRAWN"
-        uuid parent_offer_id "nullable — ланцюжок контр-пропозицій"
+        text conditions "nullable, вільний текст у Фазі 1"
         timestamp valid_until "nullable"
+        enum status "PENDING/ACCEPTED/REJECTED/COUNTERED/WITHDRAWN/EXPIRED"
+        uuid created_by_agent_id
         uuid tenant_id
         timestamp created_at
     }
 
     DEAL {
         uuid id PK
-        uuid lead_id FK
-        uuid listing_id
-        uuid buyer_client_id "денормалізовано з lead.client_id"
+        uuid listing_id FK
+        uuid offer_id FK "прийнятий офер"
+        uuid buyer_client_id
+        uuid seller_client_id "знімок з listing на момент угоди"
+        uuid lead_id "nullable"
         uuid agent_id
         numeric final_price
         string currency
-        enum status "CONTRACT_PENDING/CONTRACT_SIGNED/REGISTERED/CLOSED/CANCELLED"
-        timestamp contract_signed_at "nullable"
+        numeric commission_amount "nullable, просто сума — без рахунків"
+        enum status "OPEN/CLOSED/CANCELLED"
+        text cancel_reason "nullable"
         timestamp closed_at "nullable"
         uuid tenant_id
         timestamp created_at
         timestamp updated_at
     }
 
+    DEAL_STEP {
+        uuid id PK
+        uuid deal_id FK
+        int order_index
+        string title
+        enum status "TODO/DONE/SKIPPED"
+        timestamp due_at "nullable"
+        uuid assignee_agent_id "nullable"
+        timestamp completed_at "nullable"
+        uuid tenant_id
+    }
+
+    DEAL_CHECKLIST_TEMPLATE {
+        uuid id PK
+        string name
+        enum deal_type "SALE (пізніше — RENT з модуля rental)"
+        boolean is_default
+        uuid tenant_id
+    }
+
+    DEAL_CHECKLIST_TEMPLATE_ITEM {
+        uuid id PK
+        uuid template_id FK
+        int order_index
+        string title
+        int due_offset_days "nullable — дедлайн від дати відкриття угоди"
+        uuid tenant_id
+    }
+
     DOCUMENT {
         uuid id PK
         uuid property_id FK "завжди — навіть deal-документ прив'язаний до об'єкта"
         uuid deal_id "nullable — заповнено для документів конкретної угоди"
+        uuid deal_step_id "nullable — документ, що закриває крок чекліста"
         enum type "TECHNICAL_PASSPORT/TITLE_DEED/REGISTRY_EXTRACT/APPRAISAL_REPORT/RESIDENTS_CERTIFICATE/FLOOR_PLAN/SALE_CONTRACT/INSPECTION_ACT/OTHER"
-        string file_url "object storage"
+        string object_key "object storage: tenants/<tenant_id>/..."
         timestamp valid_until "nullable — звіт про оцінку діє 6 міс тощо"
         enum visibility "AGENCY_INTERNAL/LISTING_AGENT_AND_LAWYER/PUBLIC"
         uuid uploaded_by_agent_id
@@ -379,6 +469,66 @@ erDiagram
         timestamp created_at
     }
 ```
+
+Нові поля на `LISTING`: `seller_client_id`, `mandate_type`,
+`mandate_valid_until`, `commission_percent`, `commission_fixed`; статуси
+`DRAFT/ACTIVE/UNDER_OFFER/SOLD/WITHDRAWN/EXPIRED`.
+
+### 6.1 Покази
+
+- Перевірка накладки: агент не може мати два `SCHEDULED`-покази, що
+  перетинаються за часом (попередження, не жорстка заборона — агент
+  може свідомо поставити підряд).
+- Показ можливий лише для лістингу в `ACTIVE` або `UNDER_OFFER`
+  (резервний покупець).
+- Подання: календар агента (день/тиждень) і список показів на картці
+  лістингу з фідбеком — це і є матеріал для звіту продавцю.
+
+### 6.2 Офери
+
+- Контр-офер = новий `OFFER` з `parent_offer_id` і протилежним `party`;
+  батьківський → `COUNTERED`. Ланцюжок читається як історія торгу.
+- **Прийняття оферу** (`→ ACCEPTED`) атомарно: створює `DEAL` (`OPEN`)
+  з чеклістом із шаблону, переводить лістинг в `UNDER_OFFER`.
+- **Одна відкрита угода на лістинг.** Поки вона є, інші `PENDING`-офери
+  лишаються як резервні, але прийняти їх не можна. Угоду скасовано →
+  лістинг знову `ACTIVE`, резервні офери можна приймати.
+- `valid_until` у минулому → `EXPIRED` (той самий щоденний job, що й мандати).
+
+### 6.3 Угода і чекліст
+
+- **Етапи угоди — кроки чекліста, а не статуси в enum.** Процес закриття
+  різний у кожній країні (нотаріус в Україні, notaire+compromis у
+  Франції, conveyancing у Великій Британії) і в кожній агенції. Статус
+  угоди лише `OPEN/CLOSED/CANCELLED`; що відбувається всередині — кроки.
+- **Шаблон чекліста — на рівні агенції**, засівається при реєстрації
+  з дефолту країни. Дефолт для UA: завдаток / попередній договір →
+  перевірка правовстановчих документів і витягу з ДРРП → звіт про оцінку
+  → призначення нотаріуса → підписання договору купівлі-продажу →
+  розрахунок → реєстрація права власності → передача ключів і акт.
+- **При відкритті угоди кроки копіюються** з шаблону в `DEAL_STEP`
+  (знімок): зміна шаблону не ламає угод, що вже тривають; агент може
+  додати/пропустити крок у конкретній угоді.
+- Закриття (`→ CLOSED`) — лише коли всі кроки `DONE` або `SKIPPED`;
+  лістинг → `SOLD`. Скасування (`→ CANCELLED`) вимагає причини; лістинг →
+  `ACTIVE`, прийнятий офер → `WITHDRAWN`.
+- Модуль `rental` пізніше принесе власні шаблони (`deal_type = RENT`) —
+  механізм той самий.
+
+### 6.4 Таймлайн і задачі
+
+- **`ACTIVITY_EVENT`** — append-only стрічка подій: `(tenant_id,
+  subject_type, subject_id, type, payload jsonb, actor_agent_id,
+  created_at)`, `subject_type` ∈ PROPERTY/LISTING/CLIENT/DEAL. Пишуть
+  сервіси при кожній зміні стану (створено, змінено ціну, показ,
+  офер, крок угоди…). Картка лістингу й контакту показує стрічку;
+  заодно це аудит "хто і коли". `LEAD_ACTIVITY` (нотатки) лишається.
+- **`TASK`** — внутрішня задача з дедлайном: `(tenant_id, title, due_at,
+  assignee_agent_id, subject_type, subject_id, status OPEN/DONE)`.
+  Нагадування — лише в застосунку (список "мої задачі на сьогодні");
+  email/push — коли з'явиться інфраструктура сповіщень.
+
+### 6.5 Документи
 
 **`DOCUMENT.type` — не абстракція, а конкретний перелік з українського
 законодавства**, знайдений дослідженням: технічний паспорт,
@@ -401,24 +551,28 @@ tenant admin створює роль "Юрист", видає їй цей permis
 не спроєктовано, це окрема інфраструктурна передумова (email/push),
 якої ще немає.
 
-**Чому `Showing`/`Offer` окремі сутності, а не поля на `Lead`:** лід
-може мати кілька показів (повторний перегляд) і кілька пропозицій
-(торг) — це історія з датами й статусами кожного окремого запису, не
-один поточний стан. Той самий принцип, що обґрунтував окрему
-`LEAD_ACTIVITY` замість поля `notes` (§5).
+### 6.6 Чому саме так
+
+**Чому `Showing`/`Offer` окремі сутності, а не поля на `Lead`:** кілька
+показів (повторний перегляд) і кілька пропозицій (торг) — це історія з
+датами й статусами кожного запису, не один поточний стан. Той самий
+принцип, що обґрунтував окрему `LEAD_ACTIVITY` замість поля `notes` (§5).
+
+**Чому прив'язка до лістингу й покупця, а `lead_id` — опційний:**
+агент часто показує об'єкт людині, яка подзвонила чи прийшла з вулиці,
+і ліда в системі немає. Вимагати лід — змусити агента вести зайву
+бюрократію або обходити систему.
 
 **Чому `Deal` — окрема сутність, не просто `Lead.status = WON`:** угода
-має власний життєвий цикл (договір → реєстрація прав → закриття) з
-власними датами й документами, що триває вже ПІСЛЯ того, як лід
-"виграний". Змішування двох життєвих циклів в одному record — та сама
-помилка, якої вже уникли з `Inquiry` vs `Lead` у Фазі 2.
+має власний життєвий цикл з датами й документами, що триває вже ПІСЛЯ
+прийняття оферу. Змішування двох життєвих циклів в одному record — та
+сама помилка, якої вже уникли з `Inquiry` vs `Lead`.
 
-**Наслідок для `PROPERTY`/`LISTING`:** коли `DEAL.status → CLOSED`,
-`LISTING.status → CLOSED`, `PROPERTY.status → SOLD`/`RENTED` (залежно
-від `LISTING.dealType`) — оркеструється сервісом, не тригером у БД,
-той самий підхід, що і скрізь у проєкті.
+**Наслідок для `LISTING`:** `DEAL → CLOSED` ⇒ `LISTING → SOLD` —
+оркеструється сервісом модуля `deal` через публічний API модуля
+`listing`, не тригером у БД.
 
-### 6.1 Property-конфігурація: тип, не тільки країна
+### 6.7 Property-конфігурація: тип, не тільки країна
 
 Дослідження (RESO property types, ImmoScout24/Idealista field schemas)
 підтвердило: квартира, будинок, земельна ділянка й комерція мають
@@ -429,7 +583,7 @@ tenant admin створює роль "Юрист", видає їй цей permis
 
 **Частина полів переходить із `PROPERTY.attributes` (JSONB) у реальні
 типізовані колонки** — не тому, що JSONB "гірший", а тому, що це саме
-ті поля, за якими шукатимуть публічно (Фаза 3, публічний пошук —
+ті поля, за якими шукатимуть публічно (публічний пошук —
 відкрите питання ще з Фази 1): `bedrooms`, `bathrooms`, `land_area_sqm`
 (площа ділянки — окремо від `area_sqm`, площі будівлі), `has_elevator`,
 `parking_spaces`. Range-запити ("від 2 спалень", "до $100k") по
@@ -441,27 +595,28 @@ tenant admin створює роль "Юрист", видає їй цей permis
 country/type-специфічне — матеріал стін, тип покрівлі, приєднання
 комунікацій) лишається в `attributes` JSONB під схемою.
 
-**Модульне розміщення:** `Showing`/`Offer`/`Deal` — розширення модуля
-`crm` (той самий агрегат "що відбувається з лідом"), не новий модуль —
-поки нема реальної причини ділити (architecture.md §5). `Document` —
-власний модуль з першого дня: по-перше, заявлений масштаб Фази 3
-(шаблони, е-підпис) виправдає межу дуже швидко; по-друге, кожна країна
+**Модульне розміщення:** `Showing`/`Offer`/`Deal` — окремий модуль
+`deal`, не розширення `crm`: після рішення "лід опційний" центр цих
+сутностей — лістинг і покупець, а не лід; крім того, `rental` пізніше
+перевикористає механізм угоди й чекліста. `Document` —
+власний модуль з першого дня: по-перше, заявлений масштаб
+(шаблони, е-підпис у Фазі 2) виправдає межу дуже швидко; по-друге, кожна країна
 матиме свій список обов'язкових типів документів, власну валідацію і,
 можливо, парсинг завантажених файлів (витягувати деталі об'єкта з
 техпаспорта при завантаженні) — це вже зараз досить власної логіки,
 щоб не ховати її всередині `property`.
 
-### 6.2 Пошук — крос-tenant індекс
+### 6.8 Пошук — крос-tenant індекс (відкладено разом з публічним порталом)
 
 Публічний пошук по практично всіх полях, швидкий навіть при великій
 кількості об'єктів — вимагає окремої, не tenant-scoped схеми `search`,
 куди `ListingService` явно синхронізує дані при публікації лістингу.
 Повний дизайн, обґрунтування вибору PostgreSQL замість Elasticsearch
-на цьому етапі, і причина, чому це взагалі окрема проблема при
-schema-per-tenant — [architecture.md §8](architecture.md).
+на цьому етапі, і причина, чому це взагалі окрема проблема —
+[architecture.md §8](architecture.md).
 
 ## 7. Інші відкриті питання моделі
 
-- Видалення tenant-а (GDPR right to erasure, architecture.md §5 control
-  plane) — при schema-per-tenant це `DROP SCHEMA`, але потребує процесу
+- Видалення tenant-а (GDPR right to erasure) — фоновий job видалення за
+  `tenant_id` + префікс в object storage (ADR-001, "Наслідки"); процес
   підтвердження/затримки перед фізичним видаленням — не спроєктовано.

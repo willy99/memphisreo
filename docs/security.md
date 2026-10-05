@@ -6,7 +6,7 @@
 ## 1. Принцип
 
 Захист у кілька незалежних рубежів (defense in depth), кожен окремо:
-tenant-ізоляція (schema-per-tenant + RLS, architecture.md §3), RBAC
+tenant-ізоляція (shared schema + RLS + складені ключі, [ADR-001](adr/001-shared-schema-rls-cells.md)), RBAC
 (цей документ), і повна ізоляція платформного адміну від orbiти
 tenant-користувачів (розділ 6). Права/ролі — дані в БД, редаговані
 онлайн через адмінку, не хардкод у коді.
@@ -52,9 +52,9 @@ erDiagram
 **Чому `PERMISSION` — Java enum, не таблиця в БД:** кожен permission
 відповідає конкретній перевірці `@PreAuthorize` в коді — новий permission
 неможливий без нового коду й деплою так само, як новий endpoint. Таблиця
-в БД для цього означала б cross-schema FK з кожної tenant-схеми на
-control plane (бо `PERMISSION` мав би бути глобальним) — зайва
-крихкість заради каталогу, що й так змінюється лише разом з кодом. Адмінці
+в БД для цього означала б глобальний довідник, що мусить бути
+синхронним з кодом, — зайва крихкість заради каталогу, що й так
+змінюється лише разом з кодом. Адмінці
 каталог віддається ендпоїнтом, що читає enum, не БД.
 
 **Дві built-in роль на кожен новий tenant** (`is_system_default = true`,
@@ -134,8 +134,9 @@ require_2fa_for_agents` (bool) — tenant admin вмикає обов'язков
 - Кастомний JWT-фільтр: валідує підпис і `token_version`, кладе
   `Authentication` з authorities = `permissions` з токена в
   `SecurityContext`, і окремо кладе `tenant_id` в `TenantContext`
-  (ThreadLocal/request-scoped біт, який споживає `AbstractRoutingDataSource`
-  з architecture.md §3).
+  (ThreadLocal/request-scoped біт, з якого Hibernate `@TenantId` бере
+  поточний tenant, а на початку транзакції виконується
+  `SET LOCAL app.tenant_id` для RLS — ADR-001).
 - `@PreAuthorize("hasAuthority('LISTING_PUBLISH')")` на сервісних
   методах — по коду permission, байдуже, що ролі динамічні й
   tenant-специфічні: код перевіряє тільки фіксований каталог.
@@ -148,7 +149,7 @@ require_2fa_for_agents` (bool) — tenant admin вмикає обов'язков
 
 ## 8. Критичне правило: tenant_id ніколи не з клієнта
 
-`tenant_id`, що визначає, яку tenant-схему використовувати для запиту,
+`tenant_id`, що визначає, дані якої агенції бачить запит (`SET LOCAL app.tenant_id` для RLS),
 **береться виключно з підписаного JWT claim**, ніколи з query-параметра,
 шляху чи тіла запиту, які контролює клієнт. Порушення цього правила —
 пряма IDOR/tenant-confusion вразливість (агент одного tenant підставляє
@@ -168,7 +169,7 @@ nullable до моменту прийняття запрошення.
 
 Флоу:
 1. `POST /api/agents/invite` (`AGENT_INVITE`) — створює `Agent`
-   (`status=INVITED`, tenant-схема) і `AccountIdentity`
+   (`status=INVITED`, tenant-scoped таблиця) і `AccountIdentity`
    (`status=PENDING_INVITE`, `password_hash=null`, `invite_token`,
    `invite_expires_at=+7 днів`, control plane). Повертає посилання
    з токеном — адмін копіює й передає агенту вручну.
