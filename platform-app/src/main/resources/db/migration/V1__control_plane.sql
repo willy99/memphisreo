@@ -1,8 +1,10 @@
 -- Control plane: docs/domain-model.md §1, docs/security.md §2, §9.
 -- НЕ tenant-scoped (без RLS): реєстр tenant-ів, логіни, конфігурація країн.
 -- PostGIS — розширення на рівні БД, потрібне для geography-полів (architecture.md §6).
+-- Явно в public: Flyway виконує міграцію з search_path = control_plane, і без
+-- SCHEMA тип geography опинився б у control_plane, невидимий застосунку.
 CREATE SCHEMA IF NOT EXISTS control_plane;
-CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis SCHEMA public;
 
 CREATE TABLE control_plane.country (
     code                        varchar(2) PRIMARY KEY,

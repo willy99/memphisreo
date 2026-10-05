@@ -10,32 +10,37 @@ services:
       - "5432:5432"
     volumes:
       - memphisreo_pgdata:/var/lib/postgresql/data
-      # Логін застосунку (не власник таблиць) — виконується лише при першій ініціалізації тому.
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      # Логін застосунку (не власник таблиць) — лише при першій ініціалізації тому.
+      # Монтується ОДИН файл, не каталог: каталог затер би власний init-скрипт
+      # образу postgis (10_postgis.sh).
+      - ./docker/postgres/init/01-app-login.sql:/docker-entrypoint-initdb.d/01-app-login.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U memphisreo -d memphisreo"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
-    container_name: memphisreo-minio
+  # S3-сумісне сховище для локальної розробки. MinIO прибрав свої образи
+  # з Docker Hub/quay.io (2025) — RustFS: той самий S3 API, ті самі порти.
+  # Код працює через ObjectStorage + AWS SDK, тож це заміна лише інфраструктури.
+  s3:
+    image: rustfs/rustfs:1.0.1
+    container_name: memphisreo-s3
     environment:
-      MINIO_ROOT_USER: memphisreo
-      MINIO_ROOT_PASSWORD: memphisreo123
-    command: server /data --console-address ":9001"
+      RUSTFS_ACCESS_KEY: memphisreo
+      RUSTFS_SECRET_KEY: memphisreo123
+      RUSTFS_CONSOLE_ENABLE: "true"
     ports:
       - "9000:9000"   # S3 API
-      - "9001:9001"   # Web console
+      - "9001:9001"   # Web console: http://localhost:9001/rustfs/console/
     volumes:
-      - memphisreo_minio:/data
+      - memphisreo_s3:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/health"]
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
   memphisreo_pgdata:
-  memphisreo_minio:
+  memphisreo_s3:

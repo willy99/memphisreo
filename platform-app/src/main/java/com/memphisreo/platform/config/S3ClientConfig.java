@@ -11,7 +11,7 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 
 import java.net.URI;
 
-/** MinIO зараз, AWS S3 пізніше — та сама конфігурація, інший endpoint. docs/architecture.md §7. */
+/** Локально RustFS, у проді — S3 провайдера — та сама конфігурація, інший endpoint. docs/architecture.md §7. */
 @Configuration
 public class S3ClientConfig {
 
@@ -25,7 +25,7 @@ public class S3ClientConfig {
                 .endpointOverride(URI.create(endpoint))
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
-                // MinIO вимагає path-style (bucket у шляху, не в subdomain).
+                // Self-hosted S3 (RustFS, раніше MinIO) вимагає path-style (bucket у шляху, не в subdomain).
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build();
     }

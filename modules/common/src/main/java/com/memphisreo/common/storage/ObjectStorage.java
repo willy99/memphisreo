@@ -3,7 +3,7 @@ package com.memphisreo.common.storage;
 import java.io.InputStream;
 
 /**
- * S3-сумісний object storage — MinIO зараз (self-host), AWS S3 пізніше без
+ * S3-сумісний object storage — локально RustFS (self-host), AWS S3 пізніше без
  * зміни коду модулів, що це використовують (document, згодом media).
  * docs/architecture.md §7.
  */

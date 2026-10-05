@@ -14,21 +14,23 @@
 ## Стек
 
 - Java 17, Spring Boot 3.3, Maven (multi-module), Lombok
-- PostgreSQL 16 + PostGIS, Flyway; MinIO (S3) для файлів
+- PostgreSQL 16 + PostGIS, Flyway; S3-сумісне сховище для файлів (локально — RustFS)
 - Web: React 19 + Vite + TypeScript, react-i18next (`web/`)
 - Версії Java/Maven — `.sdkmanrc` (`sdk env`)
 
 ## Команди
 
-- Інфраструктура: `docker compose up -d` (Postgres + MinIO). Логін застосунку
-  створюється init-скриптом лише на свіжому томі: після зміни
-  `docker/postgres/init` — `docker compose down -v`.
+- **Усе одразу:** `./dev.sh` — Docker (Postgres + S3) → бекенд :8080 → фронт :5173,
+  логи в `.dev-logs/`. `./dev.sh --reset` — з нуля (видаляє локальні дані),
+  `--skip-build` — без перезбірки бекенду.
+- Лише інфраструктура: `docker compose up -d`. Логін застосунку створюється
+  init-скриптом лише на свіжому томі: після зміни `docker/postgres/init` —
+  `./dev.sh --reset`.
 - Збірка: `mvn -DskipTests clean package` (`clean` обов'язковий: старі
   міграції в `target/` ламають Flyway)
 - Unit-тести: `mvn test`
 - Інтеграційні тести (`*IT`, Testcontainers, потрібен Docker): `mvn verify`
 - Один IT: `mvn -pl platform-app verify -Dit.test=InquiryLeadFlowIT`
-- Запуск бекенду: `./build.sh` (http://localhost:8080)
 - Фронт: `npm --prefix web run dev` (http://localhost:5173), лінт: `npm --prefix web run lint`
 
 ## Структура
