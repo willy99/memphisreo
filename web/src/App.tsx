@@ -11,6 +11,7 @@ import { PropertiesPage } from "./pages/PropertiesPage";
 import { PropertyEditorPage } from "./pages/properties/PropertyEditorPage";
 import { ListingsPage } from "./pages/ListingsPage";
 import { AgentsPage } from "./pages/AgentsPage";
+import { ClientsPage } from "./pages/ClientsPage";
 import { RolesPage } from "./pages/RolesPage";
 import { AcceptInvitePage } from "./pages/AcceptInvitePage";
 import { TenantSettingsPage } from "./pages/TenantSettingsPage";
@@ -49,7 +50,13 @@ function AgencyLayout() {
               { to: "/listings", label: t("nav.listings") },
             ]}
           />
-          <NavDropdown label={t("nav.people")} items={[{ to: "/agents", label: t("nav.agents") }]} />
+          <NavDropdown
+            label={t("nav.people")}
+            items={[
+              { to: "/clients", label: t("nav.clients") },
+              { to: "/agents", label: t("nav.agents") },
+            ]}
+          />
           <NavDropdown
             label={t("nav.setup")}
             items={[
@@ -135,6 +142,7 @@ function AppRoutes() {
         <Route path="/properties/:propertyId" element={<PropertyEditorPage />} />
         <Route path="/listings" element={<ListingsPage />} />
         <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/clients" element={<ClientsPage />} />
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/settings" element={<TenantSettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />

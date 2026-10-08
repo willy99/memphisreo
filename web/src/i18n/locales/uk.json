@@ -16,7 +16,8 @@
     "logout": "Вийти",
     "language": "Мова",
     "theme": "Перемкнути тему",
-    "dashboard": "Головна"
+    "dashboard": "Головна",
+    "clients": "Клієнти"
   },
   "login": {
     "title": "Вхід до кабінету",
@@ -562,5 +563,52 @@
     "NEGOTIATING": "Переговори",
     "WON": "Угода",
     "LOST": "Втрачено"
+  },
+  "clients": {
+    "title": "Клієнти",
+    "total": "Усього: {{count}}",
+    "newButton": "Новий клієнт",
+    "cancel": "Скасувати",
+    "save": "Зберегти",
+    "saving": "Зберігаємо…",
+    "loadError": "Не вдалося завантажити клієнтів",
+    "saveError": "Не вдалося зберегти контакт",
+    "searchPlaceholder": "Пошук за ім'ям, телефоном, нотатками…",
+    "emptyTitle": "Ще немає жодного клієнта",
+    "emptyHint": "Покупці й продавці в одному списку — ким є людина, визначає конкретна угода.",
+    "nothingFound": "Нічого не знайдено",
+    "newTitle": "Новий клієнт",
+    "editTitle": "Контакт",
+    "columns": {
+      "name": "Ім'я",
+      "phone": "Телефон",
+      "email": "Email",
+      "source": "Джерело",
+      "notes": "Нотатки",
+      "created": "Додано"
+    },
+    "fields": {
+      "firstName": "Ім'я",
+      "lastName": "Прізвище",
+      "phone": "Телефон",
+      "email": "Email",
+      "contactHint": "Потрібен телефон або email",
+      "source": "Джерело",
+      "notes": "Нотатки",
+      "notesHint": "Що шукає, бюджет, коли зручно дзвонити"
+    },
+    "sources": {
+      "WEBSITE_INQUIRY": "Заявка з сайту",
+      "REFERRAL": "Рекомендація",
+      "ADVERTISEMENT": "Реклама",
+      "WALK_IN": "Прийшов в офіс",
+      "OTHER": "Інше"
+    },
+    "errors": {
+      "required": "Обов'язкове поле",
+      "invalid": "Некоректне значення",
+      "contactRequired": "Вкажіть телефон або email",
+      "duplicate": "Контакт з таким email уже є"
+    }
   }
 }

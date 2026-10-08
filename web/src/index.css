@@ -2006,3 +2006,26 @@ select:focus-visible,
     overflow-x: hidden;
   }
 }
+
+/* ---------- Клієнти ---------- */
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.notes-cell {
+  max-width: 420px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.panel.editor {
+  max-width: none;
+  padding-bottom: 20px;
+}

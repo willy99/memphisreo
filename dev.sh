@@ -6,16 +6,19 @@
 #   ./dev.sh           — звичайний запуск
 #   ./dev.sh --reset   — спершу видалити локальні дані Postgres/S3 (docker compose down -v)
 #   ./dev.sh --skip-build — не перезбирати бекенд (використати наявний jar)
+#   ./dev.sh --demo    — засіяти демо-агенцію "Одеса Рієлт" (об'єкти, фото, клієнти), якщо її ще немає
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
 RESET=false
 SKIP_BUILD=false
+DEMO=false
 for arg in "$@"; do
     case "$arg" in
         --reset) RESET=true ;;
         --skip-build) SKIP_BUILD=true ;;
+        --demo) DEMO=true ;;
         -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
         *) echo "Невідомий аргумент: $arg (див. --help)"; exit 1 ;;
     esac
@@ -137,6 +140,10 @@ fi
 
 step "Бекенд: запуск (лог — $BACKEND_LOG)"
 free_port 8080
+if $DEMO; then
+    export MEMPHISREO_DEMO_SEED=true
+    echo "    демо-дані: створюю агенцію \"Одеса Рієлт\", якщо її ще немає (фото тягнуться з Unsplash — ~30 с)"
+fi
 java -jar "$JAR" >"$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!
 if ! wait_for "Бекенд" 120 curl -sf http://localhost:8080/actuator/health; then
@@ -163,6 +170,7 @@ cat <<EOF
   Все запущено:
     Фронт         http://localhost:5173
     Бекенд        http://localhost:8080   (лог: $BACKEND_LOG)
+    Демо-агенція  ihor@odesa-realt.test / Demo1234!   (є лише після ./dev.sh --demo)
     Супер-адмін   http://localhost:5173/admin/login
                   $MEMPHISREO_BOOTSTRAP_ADMIN_EMAIL / пароль у $ENV_FILE
     Пошта (dev)   http://localhost:8025   (листи скидання пароля)

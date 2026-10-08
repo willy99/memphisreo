@@ -282,3 +282,25 @@ export interface GeoPlace {
   latitude: number;
   longitude: number;
 }
+
+export type ClientSource = "WEBSITE_INQUIRY" | "REFERRAL" | "ADVERTISEMENT" | "WALK_IN" | "OTHER";
+
+export interface Client {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  source: ClientSource;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface ClientForm {
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  source: ClientSource;
+  notes: string | null;
+}

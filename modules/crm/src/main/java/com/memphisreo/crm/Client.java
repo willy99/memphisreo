@@ -33,7 +33,6 @@ public class Client {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(nullable = false)
     private String email;
 
     private String phone;

@@ -62,6 +62,9 @@ memphisreo:
   geo:
     photon-url: ${MEMPHISREO_PHOTON_URL:https://photon.komoot.io}
     user-agent: ${MEMPHISREO_GEO_USER_AGENT:Memphis/0.1 (real-estate CRM; dev)}
+  # Демо-агенція "Одеса Рієлт" з об'єктами, фото й клієнтами — лише для розробки/демо.
+  demo-seed:
+    enabled: ${MEMPHISREO_DEMO_SEED:false}
   # Перший супер-адмін платформи — створюється на старті, якщо його ще немає.
   # Без дефолтів: локально значення дає dev.sh (.env.local), у проді — секрети.
   bootstrap-admin:

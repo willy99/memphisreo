@@ -16,7 +16,8 @@
     "logout": "Log out",
     "language": "Language",
     "theme": "Toggle light / dark",
-    "dashboard": "Home"
+    "dashboard": "Home",
+    "clients": "Clients"
   },
   "login": {
     "title": "Sign in",
@@ -562,5 +563,52 @@
     "NEGOTIATING": "Negotiating",
     "WON": "Won",
     "LOST": "Lost"
+  },
+  "clients": {
+    "title": "Clients",
+    "total": "Total: {{count}}",
+    "newButton": "New client",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "loadError": "Could not load clients",
+    "saveError": "Could not save the contact",
+    "searchPlaceholder": "Search by name, phone, notes…",
+    "emptyTitle": "No clients yet",
+    "emptyHint": "Buyers and sellers in one list — the deal defines who is who.",
+    "nothingFound": "Nothing found",
+    "newTitle": "New client",
+    "editTitle": "Contact",
+    "columns": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "source": "Source",
+      "notes": "Notes",
+      "created": "Added"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "email": "Email",
+      "contactHint": "Phone or email is required",
+      "source": "Source",
+      "notes": "Notes",
+      "notesHint": "What they're looking for, budget, best time to call"
+    },
+    "sources": {
+      "WEBSITE_INQUIRY": "Website inquiry",
+      "REFERRAL": "Referral",
+      "ADVERTISEMENT": "Advertising",
+      "WALK_IN": "Walk-in",
+      "OTHER": "Other"
+    },
+    "errors": {
+      "required": "Required",
+      "invalid": "Invalid value",
+      "contactRequired": "Enter a phone or an email",
+      "duplicate": "A contact with this email already exists"
+    }
   }
 }
