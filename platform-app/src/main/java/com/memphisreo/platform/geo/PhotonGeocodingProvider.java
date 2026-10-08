@@ -70,10 +70,12 @@ public class PhotonGeocodingProvider implements GeocodingProvider {
         if (cached != null) {
             return (List<GeoPlace>) cached;
         }
-        List<GeoPlace> places = fetch(url.toString()).stream()
+        // Кілька POI в одному будинку (банкомат, офіс…) — одна адреса для агента.
+        Map<String, GeoPlace> unique = new LinkedHashMap<>();
+        fetch(url.toString()).stream()
                 .filter(p -> countryCode == null || countryCode.equalsIgnoreCase(p.countryCode()))
-                .limit(6)
-                .toList();
+                .forEach(p -> unique.putIfAbsent(p.street() + "|" + p.houseNumber() + "|" + p.city() + "|" + p.district(), p));
+        List<GeoPlace> places = unique.values().stream().limit(6).toList();
         cache.put(cacheKey, places);
         return places;
     }

@@ -8,6 +8,7 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
+import { PropertyEditorPage } from "./pages/properties/PropertyEditorPage";
 import { ListingsPage } from "./pages/ListingsPage";
 import { AgentsPage } from "./pages/AgentsPage";
 import { RolesPage } from "./pages/RolesPage";
@@ -130,6 +131,8 @@ function AppRoutes() {
       <Route element={<AgencyLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/properties/new" element={<PropertyEditorPage key="new" />} />
+        <Route path="/properties/:propertyId" element={<PropertyEditorPage />} />
         <Route path="/listings" element={<ListingsPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/roles" element={<RolesPage />} />

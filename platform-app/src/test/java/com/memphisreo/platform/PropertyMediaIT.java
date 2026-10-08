@@ -89,6 +89,28 @@ class PropertyMediaIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void parallelUploads_allSucceed_withOneCoverAndDistinctPositions() throws Exception {
+        byte[] photo = jpeg(600, 400);
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            List<java.util.concurrent.Future<ResponseEntity<String>>> results = new java.util.ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                int n = i;
+                results.add(pool.submit(() -> upload("PHOTO", "p" + n + ".jpg", photo, String.class)));
+            }
+            for (var result : results) {
+                assertThat(result.get().getStatusCode()).isEqualTo(HttpStatus.OK);
+            }
+        } finally {
+            pool.shutdown();
+        }
+        MediaView[] media = restTemplate.exchange(mediaPath(), HttpMethod.GET, authed(token), MediaView[].class).getBody();
+        assertThat(media).hasSize(6);
+        assertThat(media).filteredOn(MediaView::cover).hasSize(1);
+        assertThat(java.util.Arrays.stream(media).map(MediaView::position).distinct()).hasSize(6);
+    }
+
+    @Test
     void fileWithImageExtensionButOtherContent_isRejected() {
         ResponseEntity<String> response = upload("PHOTO", "fake.jpg", "<html>not an image</html>".getBytes(), String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

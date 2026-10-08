@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { api, ApiError } from "../api/client";
-import type { CreateListingRequest, DealType, Listing, Property } from "../api/types";
+import type { CreateListingRequest, DealType, Listing, PropertyCard as Property } from "../api/types";
 import { StatusPill } from "../components/StatusPill";
 
 const DEAL_TYPES: DealType[] = ["SALE", "LONG_TERM_RENT", "SHORT_TERM_RENT"];

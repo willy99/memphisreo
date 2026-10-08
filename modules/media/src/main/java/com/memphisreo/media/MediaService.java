@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -52,11 +53,14 @@ public class MediaService {
     private final PropertyMediaRepository repository;
     private final ObjectStorage storage;
     private final ImageProcessor imageProcessor;
+    private final TransactionTemplate transactionTemplate;
 
-    public MediaService(PropertyMediaRepository repository, ObjectStorage storage, ImageProcessor imageProcessor) {
+    public MediaService(PropertyMediaRepository repository, ObjectStorage storage, ImageProcessor imageProcessor,
+                        TransactionTemplate transactionTemplate) {
         this.repository = repository;
         this.storage = storage;
         this.imageProcessor = imageProcessor;
+        this.transactionTemplate = transactionTemplate;
     }
 
     /**
@@ -98,9 +102,7 @@ public class MediaService {
         media.setSizeBytes((long) processed.large().jpeg().length);
         media.setWidth(processed.large().width());
         media.setHeight(processed.large().height());
-        media.setCover(kind == PropertyMedia.Kind.PHOTO && repository
-                .findByPropertyIdAndKindOrderByPositionAsc(propertyId, PropertyMedia.Kind.PHOTO).isEmpty());
-        return toView(repository.save(media));
+        return register(media, List.of(largeKey, thumbKey));
     }
 
     /** Відео-файл MP4/MOV — зберігається як є і програється з підписаного посилання. Без транзакції — див. вище. */
@@ -124,11 +126,10 @@ public class MediaService {
         media.setOriginalKey(key);
         media.setMimeType(signature.mimeType());
         media.setSizeBytes(size);
-        return toView(repository.save(media));
+        return register(media, List.of(key));
     }
 
     /** Посилання на YouTube/Vimeo — лише з дозволених хостів, лише https. */
-    @Transactional
     public MediaView addVideoLink(UUID tenantId, UUID propertyId, UUID agentId, String url) {
         URI uri;
         try {
@@ -140,10 +141,9 @@ public class MediaService {
                 || !VIDEO_HOSTS.contains(uri.getHost().toLowerCase())) {
             throw invalid("url", "unsupportedVideoHost");
         }
-        enforceLimit(propertyId, PropertyMedia.Kind.VIDEO_LINK);
         PropertyMedia media = newMedia(tenantId, propertyId, agentId, PropertyMedia.Kind.VIDEO_LINK, null);
         media.setExternalUrl(uri.toString());
-        return toView(repository.save(media));
+        return register(media, List.of());
     }
 
     public List<MediaView> list(UUID propertyId) {
@@ -167,6 +167,7 @@ public class MediaService {
 
     @Transactional
     public List<MediaView> setCover(UUID propertyId, UUID mediaId) {
+        repository.lockProperty(propertyId.toString());
         PropertyMedia media = get(propertyId, mediaId);
         if (media.getKind() != PropertyMedia.Kind.PHOTO) {
             throw invalid("kind", "coverMustBePhoto");
@@ -192,6 +193,7 @@ public class MediaService {
     /** Видалення; якщо видалено обкладинку — нею стає перше з решти фото. */
     @Transactional
     public void delete(UUID propertyId, UUID mediaId) {
+        repository.lockProperty(propertyId.toString());
         PropertyMedia media = get(propertyId, mediaId);
         boolean wasCover = media.isCover();
         repository.delete(media);
@@ -200,14 +202,10 @@ public class MediaService {
             repository.findByPropertyIdAndKindOrderByPositionAsc(propertyId, PropertyMedia.Kind.PHOTO).stream()
                     .findFirst().ifPresent(next -> next.setCover(true));
         }
+        // Запис уже видалено; "сирота" у сховищі не блокує користувача.
         for (String key : new String[]{media.getLargeKey(), media.getThumbKey(), media.getOriginalKey()}) {
             if (key != null) {
-                try {
-                    storage.delete(key);
-                } catch (RuntimeException e) {
-                    // Запис уже видалено; "сирота" у сховищі не блокує користувача.
-                    log.warn("Не вдалося видалити об'єкт сховища {}: {}", key, e.toString());
-                }
+                deleteQuietly(key);
             }
         }
     }
@@ -232,6 +230,36 @@ public class MediaService {
                 .collect(Collectors.groupingBy(PropertyMedia::getPropertyId, Collectors.counting()));
     }
 
+    /**
+     * Короткий крок у БД після важкої роботи (обробка, запис у сховище): під
+     * блокуванням об'єкта — ліміт, позиція (max+1) і чи це перше фото (обкладинка).
+     * Не вдалось зареєструвати — прибираємо вже записані файли.
+     */
+    private MediaView register(PropertyMedia media, List<String> storedKeys) {
+        try {
+            return transactionTemplate.execute(status -> {
+                UUID propertyId = media.getPropertyId();
+                repository.lockProperty(propertyId.toString());
+                enforceLimit(propertyId, media.getKind());
+                media.setPosition(repository.maxPosition(propertyId, media.getKind()) + 1);
+                media.setCover(media.getKind() == PropertyMedia.Kind.PHOTO
+                        && !repository.existsByPropertyIdAndCoverTrue(propertyId));
+                return toView(repository.save(media));
+            });
+        } catch (RuntimeException e) {
+            storedKeys.forEach(this::deleteQuietly);
+            throw e;
+        }
+    }
+
+    private void deleteQuietly(String key) {
+        try {
+            storage.delete(key);
+        } catch (RuntimeException e) {
+            log.warn("Не вдалося видалити об'єкт сховища {}: {}", key, e.toString());
+        }
+    }
+
     private PropertyMedia get(UUID propertyId, UUID mediaId) {
         return repository.findById(mediaId)
                 .filter(m -> m.getPropertyId().equals(propertyId))
@@ -245,7 +273,6 @@ public class MediaService {
         media.setUploadedByAgentId(agentId);
         media.setKind(kind);
         media.setOriginalFilename(filename != null && filename.length() > 255 ? filename.substring(0, 255) : filename);
-        media.setPosition((int) repository.countByPropertyIdAndKindIn(propertyId, EnumSet.of(kind)));
         return media;
     }
 

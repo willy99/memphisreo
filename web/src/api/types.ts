@@ -21,56 +21,6 @@ export interface RegisterTenantResponse {
 export type PropertyType = "APARTMENT" | "HOUSE" | "LAND" | "COMMERCIAL" | "OTHER";
 export type PropertyStatus = "DRAFT" | "ACTIVE" | "RESERVED" | "SOLD" | "RENTED" | "ARCHIVED";
 
-export interface Property {
-  id: string;
-  type: PropertyType;
-  addressId: string;
-  unitNumber: string | null;
-  areaSqm: number;
-  landAreaSqm: number | null;
-  rooms: number | null;
-  bedrooms: number | null;
-  bathrooms: number | null;
-  floor: number | null;
-  totalFloors: number | null;
-  yearBuilt: number | null;
-  hasElevator: boolean | null;
-  parkingSpaces: number | null;
-  description: string | null;
-  attributesJson: string | null;
-  status: PropertyStatus;
-  createdByAgentId: string;
-  tenantId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreatePropertyRequest {
-  type: PropertyType;
-  unitNumber?: string;
-  areaSqm: number;
-  landAreaSqm?: number;
-  rooms?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  floor?: number;
-  totalFloors?: number;
-  yearBuilt?: number;
-  hasElevator?: boolean;
-  parkingSpaces?: number;
-  description?: string;
-  attributesJson?: string;
-  countryCode: string;
-  region?: string;
-  city: string;
-  district?: string;
-  street: string;
-  houseNumber: string;
-  postalCode?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
 export type DealType = "SALE" | "LONG_TERM_RENT" | "SHORT_TERM_RENT";
 export type ListingStatus = "DRAFT" | "PUBLISHED" | "RESERVED" | "CLOSED" | "EXPIRED" | "ARCHIVED";
 
@@ -199,4 +149,136 @@ export interface PlatformPropertyRow {
   houseNumber: string | null;
   unitNumber: string | null;
   createdAt: string;
+}
+
+// ---------- Редактор об'єкта ----------
+
+export interface FieldError {
+  field: string;
+  code: string;
+}
+
+export interface AddressForm {
+  countryCode: string | null;
+  region: string | null;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  postalCode: string | null;
+  complexName: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geocodeSource: "AUTOCOMPLETE" | "PIN" | "MANUAL" | null;
+}
+
+export interface PropertyForm {
+  type: PropertyType;
+  market: string | null;
+  title: string | null;
+  description: string | null;
+  areaSqm: number | null;
+  livingAreaSqm: number | null;
+  kitchenAreaSqm: number | null;
+  landAreaSqm: number | null;
+  rooms: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  floor: number | null;
+  totalFloors: number | null;
+  yearBuilt: number | null;
+  ceilingHeightM: number | null;
+  wallMaterial: string | null;
+  condition: string | null;
+  heating: string | null;
+  landPurpose: string | null;
+  commercialType: string | null;
+  cadastralNumber: string | null;
+  hasElevator: boolean | null;
+  parkingSpaces: number | null;
+  features: string[];
+  unitNumber: string | null;
+  address: AddressForm;
+}
+
+export interface Price {
+  amount: number | null;
+  currency: string;
+}
+
+export interface PropertyPayload {
+  property: PropertyForm;
+  price: Price | null;
+}
+
+export type MediaKind = "PHOTO" | "FLOORPLAN" | "VIDEO" | "VIDEO_LINK";
+
+export interface MediaView {
+  id: string;
+  kind: MediaKind;
+  position: number;
+  cover: boolean;
+  caption: string | null;
+  thumbUrl: string | null;
+  url: string | null;
+  externalUrl: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  width: number | null;
+  height: number | null;
+  originalFilename: string | null;
+}
+
+export interface PropertyDetails {
+  id: string;
+  status: PropertyStatus;
+  createdAt: string;
+  updatedAt: string;
+  property: PropertyForm;
+  price: Price | null;
+  media: MediaView[];
+  missing: FieldError[];
+}
+
+export interface PropertyCard {
+  id: string;
+  type: PropertyType;
+  status: PropertyStatus;
+  title: string | null;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  unitNumber: string | null;
+  complexName: string | null;
+  areaSqm: number | null;
+  landAreaSqm: number | null;
+  rooms: number | null;
+  floor: number | null;
+  totalFloors: number | null;
+  price: number | null;
+  currency: string | null;
+  coverThumbUrl: string | null;
+  photoCount: number;
+  updatedAt: string;
+}
+
+export interface FormSchema {
+  required: Record<PropertyType, string[]>;
+  recommended: string[];
+  currencies: string[];
+  recommendedPhotos: number;
+}
+
+export interface GeoPlace {
+  label: string;
+  street: string | null;
+  houseNumber: string | null;
+  city: string | null;
+  district: string | null;
+  region: string | null;
+  postcode: string | null;
+  countryCode: string | null;
+  latitude: number;
+  longitude: number;
 }
