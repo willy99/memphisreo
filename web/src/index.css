@@ -2844,3 +2844,84 @@ a.property-card:hover {
 .row-muted td {
   color: var(--text-muted);
 }
+
+/* ---------- Картка клієнта ---------- */
+
+.match-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.match-row:hover {
+  border-color: var(--accent);
+}
+
+.match-row img,
+.match-noimg {
+  width: 72px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  display: block;
+}
+
+.match-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13.5px;
+}
+
+.match-criteria {
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.match-price {
+  font-weight: 700;
+  color: var(--text-h);
+  white-space: nowrap;
+}
+
+.journal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 18px;
+}
+
+.journal-row {
+  display: flex;
+  gap: 8px;
+}
+
+.journal-row input {
+  flex: 1;
+}
+
+.profile-fields a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.profile-fields dd {
+  overflow-wrap: anywhere;
+}

@@ -4,6 +4,7 @@ import com.memphisreo.common.TenantContext;
 import com.memphisreo.crm.Client;
 import com.memphisreo.crm.ClientForm;
 import com.memphisreo.crm.ClientService;
+import com.memphisreo.crm.RequirementForm;
 import com.memphisreo.media.MediaService;
 import com.memphisreo.media.PropertyMedia;
 import com.memphisreo.platform.agent.AgentInvitationService;
@@ -124,6 +125,16 @@ public class DemoDataSeeder implements ApplicationRunner {
                 clients.add(clientService.create(tenantId, client));
             }
             Client seller = clients.get(3); // Сергій Литвиненко — власник квартири на Люстдорфській
+            clientService.saveRequirement(tenantId, clients.get(0).getId(), new RequirementForm("APARTMENT", 2, 2, null,
+                    new BigDecimal("150000"), "USD", null, List.of("Аркадія", "Малий Фонтан"), "NEW_BUILD", List.of(), null, true));
+            clientService.saveRequirement(tenantId, clients.get(1).getId(), new RequirementForm("APARTMENT", 1, 1, null,
+                    new BigDecimal("80000"), "USD", null, List.of(), "NEW_BUILD", List.of(), "Під оренду, готівка", true));
+            clientService.saveRequirement(tenantId, clients.get(2).getId(), new RequirementForm("APARTMENT", 3, 4, null,
+                    new BigDecimal("200000"), "USD", null, List.of("Центр", "Відрада"), null, List.of("SHELTER"), null, true));
+            clientService.saveRequirement(tenantId, clients.get(4).getId(), new RequirementForm("HOUSE", null, null, null,
+                    new BigDecimal("350000"), "USD", null, List.of("Чубаївка", "Фонтанка"), null, List.of("GARAGE"), null, true));
+            clientService.saveRequirement(tenantId, clients.get(5).getId(), new RequirementForm("COMMERCIAL", null, null, null,
+                    null, "USD", new BigDecimal("60"), List.of("Центр"), null, List.of("SEPARATE_ENTRANCE"), null, true));
 
             List<Seed> seeds = seeds();
             for (int i = 0; i < seeds.size(); i++) {

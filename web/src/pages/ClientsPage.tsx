@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { api, ApiError } from "../api/client";
 import type { Client, ClientForm, ClientSource } from "../api/types";
@@ -12,6 +13,7 @@ const EMPTY: ClientForm = { firstName: "", lastName: "", email: "", phone: "", s
 export function ClientsPage() {
   const { t, i18n } = useTranslation();
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -97,7 +99,7 @@ export function ClientsPage() {
           </thead>
           <tbody>
             {visible.map((c) => (
-              <tr key={c.id} onClick={() => setEditing(c)}>
+              <tr key={c.id} onClick={() => navigate(`/clients/${c.id}`)}>
                 <td className="strong">
                   {c.firstName} {c.lastName}
                 </td>

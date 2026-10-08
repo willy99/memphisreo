@@ -8,6 +8,8 @@ import com.memphisreo.platform.sale.SaleDtos.SoldRequest;
 import com.memphisreo.platform.sale.SaleDtos.TimelineEntry;
 import com.memphisreo.platform.sale.SaleDtos.WithdrawRequest;
 import com.memphisreo.platform.sale.SaleService;
+import com.memphisreo.platform.crm.MatchingService;
+import com.memphisreo.platform.crm.MatchingService.ClientMatch;
 import com.memphisreo.security.jwt.AuthenticatedAgent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,9 +30,19 @@ public class PropertySaleController {
     private static final String CLOSE = "hasAuthority(T(com.memphisreo.security.rbac.Permission).LISTING_CLOSE.name())";
 
     private final SaleService saleService;
+    private final MatchingService matchingService;
 
-    public PropertySaleController(SaleService saleService) {
+    public PropertySaleController(SaleService saleService, MatchingService matchingService) {
         this.saleService = saleService;
+        this.matchingService = matchingService;
+    }
+
+    /** Кому з клієнтів (за їх запитами) підходить цей об'єкт. */
+    @GetMapping("/matching-clients")
+    @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).CLIENT_VIEW.name())")
+    public ResponseEntity<List<ClientMatch>> matchingClients(@PathVariable UUID propertyId) {
+        saleService.view(propertyId);
+        return ResponseEntity.ok(matchingService.clientsForProperty(propertyId));
     }
 
     @GetMapping("/sale")

@@ -20,6 +20,7 @@ import { PublicPropertyPage } from "./pages/public/PublicPropertyPage";
 import { OwnerPage } from "./pages/public/OwnerPage";
 import { AgentsPage } from "./pages/AgentsPage";
 import { ClientsPage } from "./pages/ClientsPage";
+import { ClientPage } from "./pages/ClientPage";
 import { RolesPage } from "./pages/RolesPage";
 import { AcceptInvitePage } from "./pages/AcceptInvitePage";
 import { TenantSettingsPage } from "./pages/TenantSettingsPage";
@@ -160,6 +161,7 @@ function AppRoutes() {
         <Route path="/properties/:propertyId/history" element={<PropertyHistoryPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/clients" element={<ClientsPage />} />
+        <Route path="/clients/:clientId" element={<ClientPage />} />
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/settings" element={<TenantSettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />

@@ -18,9 +18,64 @@ public class ClientService {
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final ClientRepository clientRepository;
+    private final ClientRequirementRepository requirementRepository;
 
-    public ClientService(ClientRepository clientRepository) {
+    public ClientService(ClientRepository clientRepository, ClientRequirementRepository requirementRepository) {
         this.clientRepository = clientRepository;
+        this.requirementRepository = requirementRepository;
+    }
+
+    public java.util.Optional<ClientRequirement> requirement(UUID clientId) {
+        return requirementRepository.findByClientId(clientId);
+    }
+
+    public List<ClientRequirement> activeRequirements() {
+        return requirementRepository.findByActiveTrue();
+    }
+
+    /** Запит клієнта: створити або повністю замінити. */
+    @Transactional
+    public ClientRequirement saveRequirement(UUID tenantId, UUID clientId, RequirementForm form) {
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new NotFoundException("Client не знайдено: " + clientId));
+        List<FieldError> errors = new ArrayList<>();
+        if (form.roomsMin() != null && form.roomsMax() != null && form.roomsMin() > form.roomsMax()) {
+            errors.add(new FieldError("roomsMax", "outOfRange"));
+        }
+        if (form.priceMin() != null && form.priceMax() != null && form.priceMin().compareTo(form.priceMax()) > 0) {
+            errors.add(new FieldError("priceMax", "outOfRange"));
+        }
+        if (form.currency() != null && !java.util.Set.of("USD", "UAH", "EUR").contains(form.currency())) {
+            errors.add(new FieldError("currency", "invalid"));
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Некоректний запит", errors);
+        }
+        ClientRequirement r = requirementRepository.findByClientId(clientId).orElseGet(() -> {
+            ClientRequirement created = new ClientRequirement();
+            created.setTenantId(tenantId);
+            created.setClientId(client.getId());
+            return created;
+        });
+        r.setPropertyType(blank(form.propertyType()) ? null : form.propertyType());
+        r.setRoomsMin(form.roomsMin());
+        r.setRoomsMax(form.roomsMax());
+        r.setPriceMin(form.priceMin());
+        r.setPriceMax(form.priceMax());
+        r.setCurrency(form.currency() == null ? "USD" : form.currency());
+        r.setAreaMin(form.areaMin());
+        r.setDistricts(form.districts() == null ? new ArrayList<>() : form.districts().stream()
+                .filter(d -> !blank(d)).map(String::trim).distinct().toList());
+        r.setMarket(blank(form.market()) ? null : form.market());
+        r.setMustHave(form.mustHave() == null ? new ArrayList<>() : new ArrayList<>(new java.util.LinkedHashSet<>(form.mustHave())));
+        r.setNotes(blank(form.notes()) ? null : form.notes().trim());
+        r.setActive(form.active() == null || form.active());
+        r.setUpdatedAt(java.time.Instant.now());
+        return requirementRepository.save(r);
+    }
+
+    private static boolean blank(String s) {
+        return s == null || s.isBlank();
     }
 
     @Transactional

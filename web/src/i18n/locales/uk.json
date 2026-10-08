@@ -664,7 +664,12 @@
     "AGENTS_CHANGED": "Змінено відповідальних агентів: {{agents}}",
     "INQUIRY_RECEIVED": "Заявка з сайту від {{name}}",
     "CLIENT_CREATED": "Контакт створено",
-    "OWNER_LINK_ISSUED": "Видано посилання для власника"
+    "OWNER_LINK_ISSUED": "Видано посилання для власника",
+    "REQUIREMENT_UPDATED": "Оновлено запит клієнта",
+    "CONTACT_CALL": "Дзвінок: {{note}}",
+    "CONTACT_MESSAGE": "Повідомлення: {{note}}",
+    "CONTACT_MEETING": "Зустріч: {{note}}",
+    "CONTACT_NOTE": "Нотатка: {{note}}"
   },
   "sale": {
     "notFound": "Продаж для цього об'єкта ще не заведено",
@@ -754,7 +759,8 @@
     "role": {
       "LEAD": "головний",
       "CO_AGENT": "співагент"
-    }
+    },
+    "matchingTitle": "Підходить клієнтам: {{count}}"
   },
   "public": {
     "agencyNotFound": "Агенцію не знайдено",
@@ -827,5 +833,50 @@
     "noEvents": "Подій поки немає",
     "invalid": "Посилання недійсне або протерміноване",
     "invalidHint": "Попросіть вашого агента надіслати нове посилання."
+  },
+  "clientPage": {
+    "backToList": "Усі клієнти",
+    "notFound": "Клієнта не знайдено",
+    "profile": "Контакт",
+    "requirementTitle": "Що шукає",
+    "requirementActive": "запит активний",
+    "requirementHint": "Усі заповнені умови мають збігатися; порожні — не враховуються. За запитом підбираються об'єкти у продажу.",
+    "saveRequirement": "Зберегти запит",
+    "requirementSaved": "Запит збережено",
+    "fields": {
+      "roomsMin": "Кімнат від",
+      "roomsMax": "Кімнат до",
+      "priceMin": "Бюджет від",
+      "priceMax": "Бюджет до",
+      "areaMin": "Площа від",
+      "areaHint": "Для ділянки — площа ділянки в м²",
+      "districts": "Райони / міста",
+      "districtsHint": "Через кому, як у адресі об'єкта",
+      "mustHave": "Обов'язково"
+    },
+    "matchesTitle": "Підходять об'єкти: {{count}}",
+    "noRequirement": "Заповніть запит — і тут з'являться об'єкти у продажу, що йому відповідають.",
+    "noMatches": "Поки нічого не підходить — з'явиться, щойно буде відповідний об'єкт.",
+    "criteria": {
+      "type": "тип",
+      "rooms": "кімнати",
+      "price": "бюджет",
+      "area": "площа",
+      "district": "район",
+      "market": "ринок",
+      "features": "зручності"
+    },
+    "ownedTitle": "Об'єкти у власності",
+    "journalTitle": "Журнал і історія",
+    "noteKind": "Тип запису",
+    "noteKinds": {
+      "CALL": "Дзвінок",
+      "MESSAGE": "Повідомлення",
+      "MEETING": "Зустріч",
+      "NOTE": "Нотатка"
+    },
+    "notePlaceholder": "Що домовились…",
+    "addNote": "Додати",
+    "noEvents": "Записів ще немає"
   }
 }

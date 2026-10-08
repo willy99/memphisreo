@@ -664,7 +664,12 @@
     "AGENTS_CHANGED": "Responsible agents changed: {{agents}}",
     "INQUIRY_RECEIVED": "Website inquiry from {{name}}",
     "CLIENT_CREATED": "Contact created",
-    "OWNER_LINK_ISSUED": "Owner link issued"
+    "OWNER_LINK_ISSUED": "Owner link issued",
+    "REQUIREMENT_UPDATED": "Client requirements updated",
+    "CONTACT_CALL": "Call: {{note}}",
+    "CONTACT_MESSAGE": "Message: {{note}}",
+    "CONTACT_MEETING": "Meeting: {{note}}",
+    "CONTACT_NOTE": "Note: {{note}}"
   },
   "sale": {
     "notFound": "No sale set up for this property yet",
@@ -754,7 +759,8 @@
     "role": {
       "LEAD": "lead",
       "CO_AGENT": "co-agent"
-    }
+    },
+    "matchingTitle": "Matching clients: {{count}}"
   },
   "public": {
     "agencyNotFound": "Agency not found",
@@ -827,5 +833,50 @@
     "noEvents": "No events yet",
     "invalid": "This link is invalid or expired",
     "invalidHint": "Ask your agent for a new link."
+  },
+  "clientPage": {
+    "backToList": "All clients",
+    "notFound": "Client not found",
+    "profile": "Contact",
+    "requirementTitle": "Looking for",
+    "requirementActive": "active",
+    "requirementHint": "Every filled-in condition must match; empty ones are ignored. Listed properties are matched against it.",
+    "saveRequirement": "Save requirements",
+    "requirementSaved": "Requirements saved",
+    "fields": {
+      "roomsMin": "Rooms from",
+      "roomsMax": "Rooms to",
+      "priceMin": "Budget from",
+      "priceMax": "Budget to",
+      "areaMin": "Area from",
+      "areaHint": "For land — plot area in m²",
+      "districts": "Districts / cities",
+      "districtsHint": "Comma-separated, as in the property address",
+      "mustHave": "Must have"
+    },
+    "matchesTitle": "Matching properties: {{count}}",
+    "noRequirement": "Fill in the requirements — matching listed properties will appear here.",
+    "noMatches": "Nothing matches yet — it will appear once a suitable property is listed.",
+    "criteria": {
+      "type": "type",
+      "rooms": "rooms",
+      "price": "budget",
+      "area": "area",
+      "district": "district",
+      "market": "market",
+      "features": "amenities"
+    },
+    "ownedTitle": "Owned properties",
+    "journalTitle": "Journal & history",
+    "noteKind": "Entry type",
+    "noteKinds": {
+      "CALL": "Call",
+      "MESSAGE": "Message",
+      "MEETING": "Meeting",
+      "NOTE": "Note"
+    },
+    "notePlaceholder": "What was agreed…",
+    "addNote": "Add",
+    "noEvents": "No entries yet"
   }
 }

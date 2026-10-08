@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/AuthContext";
 import { api, ApiError } from "../../api/client";
-import type { Agent, AgentView, Client, ListingStatus, MandateType, OwnerLink, SaleForm, SaleView } from "../../api/types";
+import type { Agent, AgentView, Client, ClientMatch, ListingStatus, MandateType, OwnerLink, SaleForm, SaleView } from "../../api/types";
 import { ChipGroup, Field, NumberInput } from "../../components/form/Field";
 import { StatusPill } from "../../components/StatusPill";
 import { PropertyTabs } from "./PropertyTabs";
@@ -15,6 +15,7 @@ export function PropertySalePage() {
   const { token } = useAuth();
   const { propertyId } = useParams();
   const [sale, setSale] = useState<SaleView | null>(null);
+  const [matches, setMatches] = useState<ClientMatch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -22,6 +23,7 @@ export function PropertySalePage() {
     if (!token || !propertyId) return;
     try {
       setSale(await api.get<SaleView>(`/api/properties/${propertyId}/sale`, token));
+      api.get<ClientMatch[]>(`/api/properties/${propertyId}/matching-clients`, token).then(setMatches).catch(() => setMatches([]));
     } catch (err) {
       setError(err instanceof ApiError && err.status === 404 ? t("sale.notFound") : t("sale.loadError"));
     }
@@ -55,6 +57,22 @@ export function PropertySalePage() {
           <aside className="sale-side">
             <StatusCard token={token} propertyId={propertyId} sale={sale} onChanged={setSale} notify={setToast} />
             {sale.publicUrl && <ShareCard sale={sale} notify={setToast} />}
+            {matches.length > 0 && (
+              <div className="panel">
+                <h2>{t("sale.matchingTitle", { count: matches.length })}</h2>
+                <ul className="agent-list">
+                  {matches.map((m) => (
+                    <li key={m.clientId}>
+                      <Link to={`/clients/${m.clientId}`}>
+                        {m.firstName} {m.lastName}
+                      </Link>
+                      {m.phone && <span className="hint"> · {m.phone}</span>}
+                      <div className="match-criteria">{m.matched.map((k) => t(`clientPage.criteria.${k}`)).join(" · ")}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {sale.priceHistory.length > 1 && (
               <div className="panel">
                 <h2>{t("sale.priceHistory")}</h2>

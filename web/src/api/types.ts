@@ -539,3 +539,67 @@ export interface TenantSummaryLite {
   slug: string;
   publicPhone: string | null;
 }
+
+// ---------- Клієнт: запит, підбір, журнал ----------
+
+export interface ClientRequirement {
+  id: string;
+  clientId: string;
+  propertyType: PropertyType | null;
+  roomsMin: number | null;
+  roomsMax: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  currency: string;
+  areaMin: number | null;
+  districts: string[];
+  market: string | null;
+  mustHave: string[];
+  notes: string | null;
+  active: boolean;
+  updatedAt: string;
+}
+
+export interface RequirementForm {
+  propertyType: PropertyType | null;
+  roomsMin: number | null;
+  roomsMax: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  currency: string;
+  areaMin: number | null;
+  districts: string[];
+  market: string | null;
+  mustHave: string[];
+  notes: string | null;
+  active: boolean;
+}
+
+export interface PropertyMatch {
+  property: PropertyCard;
+  score: number;
+  matched: string[];
+}
+
+export interface ClientMatch {
+  clientId: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  score: number;
+  matched: string[];
+}
+
+export interface OwnedProperty {
+  id: string;
+  title: string | null;
+  status: ListingStatus;
+}
+
+export interface ClientDetails {
+  client: Client;
+  requirement: ClientRequirement | null;
+  matches: PropertyMatch[];
+  owned: OwnedProperty[];
+  timeline: TimelineEntry[];
+}
