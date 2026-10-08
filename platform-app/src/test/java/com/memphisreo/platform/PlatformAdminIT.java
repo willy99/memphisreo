@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Супер-адмін платформи: агенції, їх статистика й об'єкти; окремий контур безпеки (docs/security.md §6). */
 class PlatformAdminIT extends AbstractIntegrationTest {
 
-    private static final String UA_ATTRIBUTES = "{\"cadastral_number\":\"1234567890:01:002:0003\"}";
-
     @Test
     void bootstrapAdmin_canLogIn_wrongPasswordIsRejected() {
         assertThat(platformLogin()).isNotBlank();
@@ -36,8 +34,8 @@ class PlatformAdminIT extends AbstractIntegrationTest {
         String slug = "stats-" + UUID.randomUUID().toString().substring(0, 8);
         RegisterTenantResponse agency = register(slug, "admin@" + slug + ".ua", "Password123!", "UA");
         String agencyToken = login("admin@" + slug + ".ua", "Password123!");
-        createProperty(agencyToken, "UA", UA_ATTRIBUTES);
-        createProperty(agencyToken, "UA", UA_ATTRIBUTES);
+        createProperty(agencyToken);
+        createProperty(agencyToken);
 
         String token = platformLogin();
         TenantPage page = restTemplate.exchange("/platform-admin/tenants?size=100", HttpMethod.GET,

@@ -1,6 +1,8 @@
 package com.memphisreo.common.storage;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.time.Duration;
 
 /**
  * S3-сумісний object storage — локально RustFS (self-host), AWS S3 пізніше без
@@ -15,4 +17,11 @@ public interface ObjectStorage {
     InputStream get(String key);
 
     void delete(String key);
+
+    /**
+     * Тимчасове підписане посилання на читання. Бакет лишається приватним;
+     * браузер отримує файл напряму зі сховища (з підтримкою Range для відео),
+     * не через бекенд. Посилання живе {@code ttl}.
+     */
+    URI presignedGetUrl(String key, Duration ttl);
 }

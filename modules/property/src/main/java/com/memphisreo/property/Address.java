@@ -30,22 +30,30 @@ public class Address {
 
     private String region;
 
-    @Column(nullable = false)
     private String city;
 
     private String district;
 
-    @Column(nullable = false)
     private String street;
 
-    @Column(name = "house_number", nullable = false)
+    @Column(name = "house_number")
     private String houseNumber;
+
+    /** Житловий комплекс (ЖК) — за ним шукають покупці новобудов. */
+    @Column(name = "complex_name")
+    private String complexName;
 
     @Column(name = "postal_code")
     private String postalCode;
 
     @Column(name = "geo_location", columnDefinition = "geography(Point,4326)")
     private Point geoLocation;
+
+    public enum GeocodeSource { AUTOCOMPLETE, PIN, MANUAL }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "geocode_source")
+    private GeocodeSource geocodeSource;
 
     @TenantId
     @Column(name = "tenant_id", nullable = false)

@@ -2,6 +2,8 @@ package com.memphisreo.platform.api;
 
 import com.memphisreo.common.ForbiddenException;
 import com.memphisreo.common.NotFoundException;
+import com.memphisreo.common.ValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import com.memphisreo.common.multitenancy.TenantIsolationViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,21 @@ public class ApiExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     public record ErrorResponse(String message) {
+    }
+
+    /** Помилки по полях — фронт підсвічує кожне поле окремо. */
+    public record ValidationErrorResponse(String message, java.util.List<ValidationException.FieldError> errors) {
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ValidationErrorResponse> handleValidation(ValidationException e) {
+        return ResponseEntity.badRequest().body(new ValidationErrorResponse(e.getMessage(), e.getErrors()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ValidationErrorResponse> handleUploadTooLarge(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(new ValidationErrorResponse(
+                "Файл завеликий", java.util.List.of(new ValidationException.FieldError("file", "fileTooLarge"))));
     }
 
     @ExceptionHandler(NotFoundException.class)

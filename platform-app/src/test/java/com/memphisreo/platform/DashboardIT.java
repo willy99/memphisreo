@@ -16,7 +16,7 @@ class DashboardIT extends AbstractIntegrationTest {
         String slugA = "dash-a-" + UUID.randomUUID().toString().substring(0, 8);
         register(slugA, "admin@" + slugA + ".ua", "Password123!", "UA");
         String tokenA = login("admin@" + slugA + ".ua", "Password123!");
-        createProperty(tokenA, "UA", "{\"cadastral_number\":\"1234567890:01:002:0003\"}");
+        createProperty(tokenA);
 
         String slugB = "dash-b-" + UUID.randomUUID().toString().substring(0, 8);
         register(slugB, "admin@" + slugB + ".ua", "Password123!", "UA");

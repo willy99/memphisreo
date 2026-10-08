@@ -1,5 +1,7 @@
 package com.memphisreo.platform;
 
+import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
+
 import com.memphisreo.crm.Client;
 import com.memphisreo.crm.Lead;
 import com.memphisreo.crm.LeadActivity;
@@ -29,8 +31,8 @@ class InquiryLeadFlowIT extends AbstractIntegrationTest {
 
         register(slug, email, password, "UA");
         String token = login(email, password);
-        Property property = createProperty(token, "UA", "{\"cadastral_number\":\"1234567890:01:002:0003\"}");
-        Listing listing = createListing(token, property.getId());
+        PropertyDetails property = createProperty(token);
+        Listing listing = createListing(token, property.id());
 
         CreateInquiryRequest inquiryRequest = new CreateInquiryRequest(
                 "Ірина Петренко", "iryna@example.com", "+380501234567", "Цікавить перегляд у вихідні");

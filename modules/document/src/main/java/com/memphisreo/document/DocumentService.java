@@ -27,7 +27,9 @@ public class DocumentService {
     public Document upload(UUID tenantId, UUID propertyId, UUID uploadedByAgentId, Document.Type type,
                             Document.Visibility visibility, String fileName, String contentType,
                             InputStream content, long contentLength) {
-        String objectKey = "%s/%s/%s-%s".formatted(tenantId, propertyId, UUID.randomUUID(), fileName);
+        // Префікс tenants/<id>/ — видалення агенції = видалення префікса (ADR-001).
+        // Ім'я файлу — лише в БД, не в ключі (довільні символи від клієнта).
+        String objectKey = "tenants/%s/properties/%s/documents/%s".formatted(tenantId, propertyId, UUID.randomUUID());
         objectStorage.put(objectKey, content, contentLength, contentType);
 
         Document document = new Document();

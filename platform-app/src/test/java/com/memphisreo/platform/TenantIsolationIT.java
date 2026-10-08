@@ -1,5 +1,7 @@
 package com.memphisreo.platform;
 
+import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
+
 import com.memphisreo.crm.Lead;
 import com.memphisreo.crm.LeadActivity;
 import com.memphisreo.inquiry.CreateInquiryRequest;
@@ -33,12 +35,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class TenantIsolationIT extends AbstractIntegrationTest {
 
-    private static final String UA_ATTRIBUTES = "{\"cadastral_number\":\"1234567890:01:002:0003\"}";
-
     private RegisterTenantResponse tenantA;
     private String slugA;
     private String tokenA;
-    private Property propertyA;
+    private PropertyDetails propertyA;
     private Listing listingA;
     private Lead leadA;
 
@@ -51,8 +51,8 @@ class TenantIsolationIT extends AbstractIntegrationTest {
         slugA = "iso-a-" + UUID.randomUUID().toString().substring(0, 8);
         tenantA = register(slugA, "admin@" + slugA + ".ua", "PasswordA123!", "UA");
         tokenA = login("admin@" + slugA + ".ua", "PasswordA123!");
-        propertyA = createProperty(tokenA, "UA", UA_ATTRIBUTES);
-        listingA = createListing(tokenA, propertyA.getId());
+        propertyA = createProperty(tokenA);
+        listingA = createListing(tokenA, propertyA.id());
 
         Inquiry inquiryA = restTemplate.postForEntity(
                 "/api/public/tenants/" + slugA + "/listings/" + listingA.getId() + "/inquiries",
@@ -68,12 +68,12 @@ class TenantIsolationIT extends AbstractIntegrationTest {
 
     @Test
     void api_otherAgencysRecordsAreInvisible() {
-        assertThat(get("/api/properties/" + propertyA.getId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(get("/api/properties/" + propertyA.id()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(get("/api/listings/" + listingA.getId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(get("/api/leads/" + leadA.getId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(get("/api/clients/" + leadA.getClientId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
-        assertThat(restTemplate.exchange("/api/properties", HttpMethod.GET, authed(tokenB), Property[].class).getBody())
+        assertThat(restTemplate.exchange("/api/properties", HttpMethod.GET, authed(tokenB), com.memphisreo.platform.property.PropertyEditorDtos.PropertyCard[].class).getBody())
                 .isEmpty();
         assertThat(restTemplate.exchange("/api/listings", HttpMethod.GET, authed(tokenB), Listing[].class).getBody())
                 .isEmpty();
@@ -99,7 +99,7 @@ class TenantIsolationIT extends AbstractIntegrationTest {
 
         ResponseEntity<String> listingOnForeignProperty = restTemplate.exchange(
                 "/api/listings", HttpMethod.POST,
-                authed(tokenB, new CreateListingRequest(propertyA.getId(), Listing.DealType.SALE,
+                authed(tokenB, new CreateListingRequest(propertyA.id(), Listing.DealType.SALE,
                         new BigDecimal("1"), "USD")), String.class);
         assertThat(listingOnForeignProperty.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
@@ -126,7 +126,7 @@ class TenantIsolationIT extends AbstractIntegrationTest {
             assertThat(count(app, "SELECT count(*) FROM app.agent")).isEqualTo(1);
 
             setTenant(app, tenantA.tenantId());
-            assertThat(count(app, "SELECT count(*) FROM app.property WHERE id = '" + propertyA.getId() + "'"))
+            assertThat(count(app, "SELECT count(*) FROM app.property WHERE id = '" + propertyA.id() + "'"))
                     .isEqualTo(1);
         }
     }
@@ -167,7 +167,7 @@ class TenantIsolationIT extends AbstractIntegrationTest {
                         VALUES (?, ?, ?, ?, 'SALE', 1, 'USD')""")) {
                     insert.setObject(1, UUID.randomUUID());
                     insert.setObject(2, tenantB.tenantId());
-                    insert.setObject(3, propertyA.getId());
+                    insert.setObject(3, propertyA.id());
                     insert.setObject(4, tenantB.adminAgentId());
                     insert.executeUpdate();
                 }

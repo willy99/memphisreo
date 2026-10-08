@@ -46,7 +46,7 @@ class AgentInviteAndRoleFlowIT extends AbstractIntegrationTest {
         assertThat(agentToken).isNotBlank();
 
         // AGENT — може створювати property (стандартний набір), але не запрошувати інших агентів.
-        createProperty(agentToken, "UA", "{\"cadastral_number\":\"1234567890:01:002:0003\"}");
+        createProperty(agentToken);
 
         ResponseEntity<String> forbiddenInvite = restTemplate.exchange(
                 "/api/agents/invite", HttpMethod.POST,

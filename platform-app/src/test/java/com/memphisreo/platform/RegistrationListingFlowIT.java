@@ -1,5 +1,7 @@
 package com.memphisreo.platform;
 
+import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
+
 import com.memphisreo.listing.Listing;
 import com.memphisreo.platform.api.AuthController;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
@@ -33,11 +35,11 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
         String token = login(email, password);
         assertThat(token).isNotBlank();
 
-        Property property = createProperty(token, "UA", "{\"cadastral_number\":\"1234567890:01:002:0003\"}");
-        assertThat(property.getId()).isNotNull();
-        assertThat(property.getStatus()).isEqualTo(Property.Status.ACTIVE);
+        PropertyDetails property = createProperty(token);
+        assertThat(property.id()).isNotNull();
+        assertThat(property.status()).isEqualTo(Property.Status.DRAFT);
 
-        Listing listing = createListing(token, property.getId());
+        Listing listing = createListing(token, property.id());
         assertThat(listing.getId()).isNotNull();
         assertThat(listing.getStatus()).isEqualTo(Listing.Status.PUBLISHED);
 
@@ -53,8 +55,8 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
         String emailA = "admin@" + slugA + ".ua";
         register(slugA, emailA, "PasswordA123!", "UA");
         String tokenA = login(emailA, "PasswordA123!");
-        Property propertyA = createProperty(tokenA, "UA", "{\"cadastral_number\":\"1234567890:01:002:0003\"}");
-        Listing listingA = createListing(tokenA, propertyA.getId());
+        PropertyDetails propertyA = createProperty(tokenA);
+        Listing listingA = createListing(tokenA, propertyA.id());
 
         String slugB = "iso-b-" + UUID.randomUUID().toString().substring(0, 8);
         String emailB = "admin@" + slugB + ".de";

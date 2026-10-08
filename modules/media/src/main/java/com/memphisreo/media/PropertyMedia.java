@@ -9,7 +9,11 @@ import org.hibernate.annotations.TenantId;
 import java.time.Instant;
 import java.util.UUID;
 
-/** property_id — сире посилання на Property, не JPA-зв'язок через межу модуля. */
+/**
+ * Медіа об'єкта. property_id — сире посилання через межу модуля.
+ * Фото/планування зберігаються лише як перекодовані JPEG (large + thumb):
+ * EXIF і GPS з оригіналу не потрапляють у сховище. Відео — оригінал файлу.
+ */
 @Entity
 @Table(name = "property_media")
 @Getter
@@ -17,7 +21,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class PropertyMedia {
 
-    public enum Type { PHOTO, VIDEO, TOUR_3D }
+    public enum Kind { PHOTO, FLOORPLAN, VIDEO, VIDEO_LINK }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,14 +32,42 @@ public class PropertyMedia {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Type type;
+    private Kind kind;
 
-    /** Object storage (S3-сумісне), не локальний диск — docs/architecture.md §4. */
     @Column(nullable = false)
-    private String url;
+    private int position;
 
-    @Column(name = "order_index", nullable = false)
-    private int orderIndex;
+    @Column(name = "is_cover", nullable = false)
+    private boolean cover;
+
+    private String caption;
+
+    @Column(name = "large_key")
+    private String largeKey;
+
+    @Column(name = "thumb_key")
+    private String thumbKey;
+
+    @Column(name = "original_key")
+    private String originalKey;
+
+    @Column(name = "external_url")
+    private String externalUrl;
+
+    @Column(name = "original_filename")
+    private String originalFilename;
+
+    @Column(name = "mime_type")
+    private String mimeType;
+
+    @Column(name = "size_bytes")
+    private Long sizeBytes;
+
+    private Integer width;
+    private Integer height;
+
+    @Column(name = "uploaded_by_agent_id", nullable = false)
+    private UUID uploadedByAgentId;
 
     @TenantId
     @Column(name = "tenant_id", nullable = false)

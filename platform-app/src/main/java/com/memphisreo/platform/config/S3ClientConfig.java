@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -26,6 +27,21 @@ public class S3ClientConfig {
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
                 // Self-hosted S3 (RustFS, раніше MinIO) вимагає path-style (bucket у шляху, не в subdomain).
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                .build();
+    }
+
+    /** Підписує посилання для браузера — той самий endpoint і path-style, що й клієнт. */
+    @Bean
+    public S3Presigner s3Presigner(
+            @Value("${memphisreo.storage.public-endpoint:${memphisreo.storage.endpoint:http://localhost:9000}}") String endpoint,
+            @Value("${memphisreo.storage.access-key:memphisreo}") String accessKey,
+            @Value("${memphisreo.storage.secret-key:memphisreo123}") String secretKey,
+            @Value("${memphisreo.storage.region:us-east-1}") String region) {
+        return S3Presigner.builder()
+                .endpointOverride(URI.create(endpoint))
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build();
     }
