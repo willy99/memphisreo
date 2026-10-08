@@ -1,7 +1,6 @@
 package com.memphisreo.platform;
 
-import com.memphisreo.listing.CreateListingRequest;
-import com.memphisreo.listing.Listing;
+import com.memphisreo.platform.sale.SaleDtos.SaleView;
 import com.memphisreo.platform.api.AuthController;
 import com.memphisreo.platform.registration.RegisterTenantRequest;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
@@ -238,13 +237,15 @@ public abstract class AbstractIntegrationTest {
         return response.getBody();
     }
 
-    protected Listing createListing(String token, UUID propertyId) {
-        CreateListingRequest request = new CreateListingRequest(
-                propertyId, Listing.DealType.SALE, new BigDecimal("95000"), "USD");
-        ResponseEntity<Listing> response = restTemplate.exchange(
-                "/api/listings", HttpMethod.POST, authed(token, request), Listing.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody();
+    /** Повний шлях до публікації: чернетка → завершена картка → виставлено на продаж. */
+    protected SaleView listProperty(String token, UUID propertyId) {
+        ResponseEntity<PropertyDetails> completed = restTemplate.exchange("/api/properties/" + propertyId + "/complete",
+                HttpMethod.POST, authed(token), PropertyDetails.class);
+        assertThat(completed.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<SaleView> activated = restTemplate.exchange("/api/properties/" + propertyId + "/sale/activate",
+                HttpMethod.POST, authed(token), SaleView.class);
+        assertThat(activated.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return activated.getBody();
     }
 
     protected HttpEntity<Void> authed(String token) {

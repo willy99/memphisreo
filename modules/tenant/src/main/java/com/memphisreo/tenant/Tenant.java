@@ -57,6 +57,21 @@ public class Tenant {
     @Column(name = "auto_create_deal_on_won", nullable = false)
     private boolean autoCreateDealOnWon = false;
 
+    // Публічні контакти для сторінки агенції — docs/sales-workflow.md §2.
+    @Column(name = "public_phone")
+    private String publicPhone;
+
+    @Column(name = "public_email")
+    private String publicEmail;
+
+    private String website;
+
+    @Column(columnDefinition = "text")
+    private String about;
+
+    @Column(name = "public_city")
+    private String publicCity;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

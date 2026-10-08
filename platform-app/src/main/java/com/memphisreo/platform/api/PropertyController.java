@@ -60,7 +60,8 @@ public class PropertyController {
     /** Чернетка → активний об'єкт; 400 зі списком незаповнених обов'язкових полів. */
     @PostMapping("/{id}/complete")
     @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).PROPERTY_EDIT.name())")
-    public ResponseEntity<PropertyDetails> complete(@PathVariable UUID id) {
-        return ResponseEntity.ok(editorService.complete(id));
+    public ResponseEntity<PropertyDetails> complete(@AuthenticationPrincipal AuthenticatedAgent principal,
+                                                    @PathVariable UUID id) {
+        return ResponseEntity.ok(editorService.complete(principal.tenantId(), principal.agentId(), id));
     }
 }

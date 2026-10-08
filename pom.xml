@@ -107,6 +107,11 @@
             </dependency>
             <dependency>
                 <groupId>com.memphisreo</groupId>
+                <artifactId>activity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.memphisreo</groupId>
                 <artifactId>media</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -173,6 +178,7 @@
         <module>modules/agent</module>
         <module>modules/property</module>
         <module>modules/listing</module>
+        <module>modules/activity</module>
         <module>modules/media</module>
         <module>modules/search</module>
         <module>modules/inquiry</module>

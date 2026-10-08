@@ -5,9 +5,9 @@ import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
 import com.memphisreo.crm.Client;
 import com.memphisreo.crm.Lead;
 import com.memphisreo.crm.LeadActivity;
-import com.memphisreo.inquiry.CreateInquiryRequest;
 import com.memphisreo.inquiry.Inquiry;
-import com.memphisreo.listing.Listing;
+import com.memphisreo.platform.publicsite.PublicDtos.InquiryRequest;
+import com.memphisreo.platform.sale.SaleDtos.SaleView;
 import com.memphisreo.platform.api.LeadController;
 import com.memphisreo.property.Property;
 import org.junit.jupiter.api.Test;
@@ -32,24 +32,24 @@ class InquiryLeadFlowIT extends AbstractIntegrationTest {
         register(slug, email, password, "UA");
         String token = login(email, password);
         PropertyDetails property = createProperty(token);
-        Listing listing = createListing(token, property.id());
+        SaleView sale = listProperty(token, property.id());
 
-        CreateInquiryRequest inquiryRequest = new CreateInquiryRequest(
-                "Ірина Петренко", "iryna@example.com", "+380501234567", "Цікавить перегляд у вихідні");
+        InquiryRequest inquiryRequest = new InquiryRequest(
+                "Ірина Петренко", "+380501234567", "iryna@example.com", "Цікавить перегляд у вихідні");
         ResponseEntity<Inquiry> inquiryResponse = restTemplate.postForEntity(
-                "/api/public/tenants/" + slug + "/listings/" + listing.getId() + "/inquiries",
+                "/api/public/agencies/" + slug + "/properties/" + property.id() + "/inquiries",
                 inquiryRequest, Inquiry.class);
         assertThat(inquiryResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Inquiry inquiry = inquiryResponse.getBody();
         assertThat(inquiry.getStatus()).isEqualTo(Inquiry.Status.NEW);
-        assertThat(inquiry.getAgentId()).isEqualTo(listing.getAgentId());
+        assertThat(inquiry.getAgentId()).isNotNull();
 
         ResponseEntity<Lead> convertResponse = restTemplate.exchange(
                 "/api/inquiries/" + inquiry.getId() + "/convert", HttpMethod.POST, authed(token), Lead.class);
         assertThat(convertResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Lead lead = convertResponse.getBody();
         assertThat(lead.getStatus()).isEqualTo(Lead.Status.NEW);
-        assertThat(lead.getListingId()).isEqualTo(listing.getId());
+        assertThat(lead.getListingId()).isEqualTo(sale.listingId());
         assertThat(lead.getSourceInquiryId()).isEqualTo(inquiry.getId());
 
         // Повторна конвертація того самого inquiry — заборонена.

@@ -43,6 +43,10 @@
         </dependency>
         <dependency>
             <groupId>com.memphisreo</groupId>
+            <artifactId>activity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.memphisreo</groupId>
             <artifactId>media</artifactId>
         </dependency>
         <dependency>

@@ -8,6 +8,7 @@ import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /** property_id/agent_id — сирі посилання через межу модуля — docs/domain-model.md §3. */
@@ -20,7 +21,10 @@ public class Listing {
 
     public enum DealType { SALE, LONG_TERM_RENT, SHORT_TERM_RENT }
 
-    public enum Status { DRAFT, PUBLISHED, RESERVED, CLOSED, EXPIRED, ARCHIVED }
+    /** Життєвий цикл продажу — docs/domain-model.md §6.0. */
+    public enum Status { DRAFT, ACTIVE, UNDER_OFFER, SOLD, WITHDRAWN, EXPIRED }
+
+    public enum MandateType { EXCLUSIVE, NON_EXCLUSIVE }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,7 +40,7 @@ public class Listing {
     @Column(name = "deal_type", nullable = false)
     private DealType dealType;
 
-    @Column(nullable = false)
+    /** Null у чернетці — ціну ще не вказали. */
     private BigDecimal price;
 
     @Column(nullable = false, length = 3)
@@ -49,6 +53,32 @@ public class Listing {
     @TenantId
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
+
+    /** Власник — контакт агенції (сире посилання на модуль crm). */
+    @Column(name = "seller_client_id")
+    private UUID sellerClientId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mandate_type")
+    private MandateType mandateType;
+
+    @Column(name = "mandate_valid_until")
+    private LocalDate mandateValidUntil;
+
+    @Column(name = "commission_percent")
+    private BigDecimal commissionPercent;
+
+    @Column(name = "commission_fixed")
+    private BigDecimal commissionFixed;
+
+    @Column(name = "access_notes")
+    private String accessNotes;
+
+    @Column(name = "hide_exact_address", nullable = false)
+    private boolean hideExactAddress;
+
+    @Column(name = "withdrawn_reason")
+    private String withdrawnReason;
 
     @Column(name = "published_at")
     private Instant publishedAt;

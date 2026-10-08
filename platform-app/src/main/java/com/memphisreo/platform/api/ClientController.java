@@ -1,5 +1,7 @@
 package com.memphisreo.platform.api;
 
+import com.memphisreo.activity.ActivityEvent.SubjectType;
+import com.memphisreo.activity.ActivityRecorder;
 import com.memphisreo.common.NotFoundException;
 import com.memphisreo.crm.Client;
 import com.memphisreo.crm.ClientForm;
@@ -22,10 +24,15 @@ public class ClientController {
 
     private final ClientRepository clientRepository;
     private final ClientService clientService;
+    private final ActivityRecorder activity;
+    private final org.springframework.transaction.support.TransactionTemplate tx;
 
-    public ClientController(ClientRepository clientRepository, ClientService clientService) {
+    public ClientController(ClientRepository clientRepository, ClientService clientService, ActivityRecorder activity,
+                            org.springframework.transaction.support.TransactionTemplate tx) {
         this.clientRepository = clientRepository;
         this.clientService = clientService;
+        this.activity = activity;
+        this.tx = tx;
     }
 
     @GetMapping
@@ -46,7 +53,13 @@ public class ClientController {
     @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).CLIENT_MANAGE.name())")
     public ResponseEntity<Client> create(@AuthenticationPrincipal AuthenticatedAgent principal,
                                          @RequestBody ClientForm form) {
-        return ResponseEntity.ok(clientService.create(principal.tenantId(), form));
+        Client client = tx.execute(s -> {
+            Client created = clientService.create(principal.tenantId(), form);
+            activity.record(principal.tenantId(), SubjectType.CLIENT, created.getId(), "CLIENT_CREATED",
+                    java.util.Map.of("source", created.getSource().name()), principal.agentId(), false);
+            return created;
+        });
+        return ResponseEntity.ok(client);
     }
 
     @PutMapping("/{id}")

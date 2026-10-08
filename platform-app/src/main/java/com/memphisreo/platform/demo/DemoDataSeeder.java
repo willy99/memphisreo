@@ -16,6 +16,11 @@ import com.memphisreo.platform.property.PropertyEditorService;
 import com.memphisreo.platform.registration.RegisterTenantRequest;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
 import com.memphisreo.platform.registration.TenantRegistrationService;
+import com.memphisreo.platform.sale.SaleDtos.AgentsRequest;
+import com.memphisreo.platform.sale.SaleService;
+import com.memphisreo.listing.Listing;
+import com.memphisreo.listing.SaleForm;
+import com.memphisreo.tenant.Tenant;
 import com.memphisreo.property.Address;
 import com.memphisreo.property.Property;
 import com.memphisreo.property.Property.Condition;
@@ -75,17 +80,19 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final PropertyEditorService editorService;
     private final MediaService mediaService;
     private final ClientService clientService;
+    private final SaleService saleService;
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
     public DemoDataSeeder(TenantRepository tenantRepository, TenantRegistrationService registrationService,
                           AgentInvitationService invitationService, PropertyEditorService editorService,
-                          MediaService mediaService, ClientService clientService) {
+                          MediaService mediaService, ClientService clientService, SaleService saleService) {
         this.tenantRepository = tenantRepository;
         this.registrationService = registrationService;
         this.invitationService = invitationService;
         this.editorService = editorService;
         this.mediaService = mediaService;
         this.clientService = clientService;
+        this.saleService = saleService;
     }
 
     @Override
@@ -99,10 +106,24 @@ public class DemoDataSeeder implements ApplicationRunner {
                 "Одеса Рієлт", SLUG, "UA", ADMIN_EMAIL, PASSWORD, "Ігор", "Ткаченко"));
         UUID tenantId = agency.tenantId();
 
+        Tenant tenant = tenantRepository.findById(tenantId).orElseThrow();
+        tenant.setPublicPhone("+380 48 700 12 34");
+        tenant.setPublicEmail("hello@odesa-realt.test");
+        tenant.setPublicCity("Одеса");
+        tenant.setAbout("Агенція нерухомості в Одесі з 2012 року: квартири в центрі та Аркадії, будинки на Фонтані, "
+                + "комерційні приміщення. Супровід угоди від першого показу до реєстрації права власності.");
+        tenantRepository.save(tenant);
+
         TenantContext.runAs(tenantId, () -> {
             UUID olena = invite(tenantId, "olena@odesa-realt.test", "Олена", "Шевчук");
             UUID maksym = invite(tenantId, "maksym@odesa-realt.test", "Максим", "Руденко");
             UUID[] agents = {agency.adminAgentId(), olena, maksym};
+
+            List<Client> clients = new java.util.ArrayList<>();
+            for (ClientForm client : clients()) {
+                clients.add(clientService.create(tenantId, client));
+            }
+            Client seller = clients.get(3); // Сергій Литвиненко — власник квартири на Люстдорфській
 
             List<Seed> seeds = seeds();
             for (int i = 0; i < seeds.size(); i++) {
@@ -116,12 +137,27 @@ public class DemoDataSeeder implements ApplicationRunner {
                             photo.caption() + ".jpg", new ByteArrayInputStream(bytes), bytes.length);
                     mediaService.updateCaption(created.id(), view.id(), photo.caption());
                 }
-                editorService.complete(created.id());
-                log.info("  об'єкт {}/{}: {}", i + 1, seeds.size(), seed.payload().property().title());
-            }
+                editorService.complete(tenantId, agentId, created.id());
 
-            for (ClientForm client : clients()) {
-                clientService.create(tenantId, client);
+                // Продаж: мандат, доступ, власник (для одного об'єкта), другий агент на частині об'єктів.
+                boolean isLiustdorf = seed.payload().property().title().contains("Люстдорфській");
+                boolean hideAddress = seed.payload().property().type() == Type.HOUSE;
+                saleService.update(tenantId, agentId, created.id(), new SaleForm(null, null,
+                        isLiustdorf ? seller.getId() : null,
+                        i % 3 == 0 ? Listing.MandateType.EXCLUSIVE : Listing.MandateType.NON_EXCLUSIVE,
+                        java.time.LocalDate.now().plusMonths(i % 2 == 0 ? 6 : 3),
+                        new BigDecimal(i % 3 == 0 ? "3" : "4"), null,
+                        isLiustdorf ? "Ключі в офісі, власник у Польщі — показ без узгодження" : "Домовлятися з власником за день",
+                        hideAddress));
+                if (i % 2 == 1) {
+                    saleService.setAgents(tenantId, agentId, created.id(),
+                            new AgentsRequest(agentId, List.of(agents[(i + 1) % agents.length])));
+                }
+                // Один об'єкт лишаємо чернеткою продажу — для демонстрації "Виставити на продаж".
+                if (i != seeds.size() - 1) {
+                    saleService.activate(tenantId, agentId, created.id());
+                }
+                log.info("  об'єкт {}/{}: {}", i + 1, seeds.size(), seed.payload().property().title());
             }
         });
         log.info("Демо-агенцію створено: {} / {}", ADMIN_EMAIL, PASSWORD);

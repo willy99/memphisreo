@@ -1,0 +1,11 @@
+package com.memphisreo.crm;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface OwnerAccessTokenRepository extends JpaRepository<OwnerAccessToken, UUID> {
+
+    Optional<OwnerAccessToken> findByTokenHash(String tokenHash);
+}

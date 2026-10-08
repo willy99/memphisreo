@@ -1,5 +1,7 @@
 package com.memphisreo.platform.property;
 
+import com.memphisreo.activity.ActivityEvent.SubjectType;
+import com.memphisreo.activity.ActivityRecorder;
 import com.memphisreo.common.ValidationException;
 import com.memphisreo.common.ValidationException.FieldError;
 import com.memphisreo.listing.Listing;
@@ -13,6 +15,8 @@ import com.memphisreo.platform.property.PropertyEditorDtos.PropertyPayload;
 import com.memphisreo.property.Address;
 import com.memphisreo.property.AddressRepository;
 import com.memphisreo.property.Property;
+import com.memphisreo.property.PropertyAgent;
+import com.memphisreo.property.PropertyAgentRepository;
 import com.memphisreo.property.PropertyForm;
 import com.memphisreo.property.PropertyRepository;
 import com.memphisreo.property.PropertyRules;
@@ -23,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,21 +52,35 @@ public class PropertyEditorService {
     private final AddressRepository addressRepository;
     private final ListingService listingService;
     private final MediaService mediaService;
+    private final PropertyAgentRepository propertyAgentRepository;
+    private final ActivityRecorder activity;
 
     public PropertyEditorService(PropertyService propertyService, PropertyRepository propertyRepository,
                                  AddressRepository addressRepository, ListingService listingService,
-                                 MediaService mediaService) {
+                                 MediaService mediaService, PropertyAgentRepository propertyAgentRepository,
+                                 ActivityRecorder activity) {
         this.propertyService = propertyService;
         this.propertyRepository = propertyRepository;
         this.addressRepository = addressRepository;
         this.listingService = listingService;
         this.mediaService = mediaService;
+        this.propertyAgentRepository = propertyAgentRepository;
+        this.activity = activity;
     }
 
     @Transactional
     public PropertyDetails create(UUID tenantId, UUID agentId, PropertyPayload payload) {
         validatePrice(payload.price());
         Property property = propertyService.createDraft(tenantId, agentId, payload.property());
+        // Автор — головний відповідальний агент; чернетка продажу — одразу (ціна може бути порожня).
+        PropertyAgent lead = new PropertyAgent();
+        lead.setTenantId(tenantId);
+        lead.setPropertyId(property.getId());
+        lead.setAgentId(agentId);
+        lead.setRole(PropertyAgent.Role.LEAD);
+        propertyAgentRepository.save(lead);
+        listingService.ensureDraft(tenantId, property.getId(), agentId);
+        activity.record(tenantId, SubjectType.PROPERTY, property.getId(), "PROPERTY_CREATED", Map.of(), agentId, true);
         savePrice(tenantId, agentId, property.getId(), payload.price());
         return details(property.getId());
     }
@@ -78,12 +97,16 @@ public class PropertyEditorService {
     }
 
     @Transactional
-    public PropertyDetails complete(UUID propertyId) {
+    public PropertyDetails complete(UUID tenantId, UUID agentId, UUID propertyId) {
         List<FieldError> extra = new ArrayList<>();
         if (listingService.current(propertyId).map(Listing::getPrice).isEmpty()) {
             extra.add(new FieldError("price.amount", "required"));
         }
+        boolean wasDraft = propertyService.get(propertyId).getStatus() == Property.Status.DRAFT;
         propertyService.complete(propertyId, extra);
+        if (wasDraft) {
+            activity.record(tenantId, SubjectType.PROPERTY, propertyId, "PROPERTY_COMPLETED", Map.of(), agentId, true);
+        }
         return details(propertyId);
     }
 
@@ -129,7 +152,9 @@ public class PropertyEditorService {
 
     private void savePrice(UUID tenantId, UUID agentId, UUID propertyId, Price price) {
         if (price != null && price.amount() != null) {
-            listingService.setAskingPrice(tenantId, propertyId, agentId, price.amount(), price.currency());
+            listingService.setAskingPrice(tenantId, propertyId, agentId, price.amount(), price.currency())
+                    .ifPresent(change -> activity.record(tenantId, SubjectType.PROPERTY, propertyId, change.event(),
+                            new HashMap<>(change.details()), agentId, true));
         }
     }
 

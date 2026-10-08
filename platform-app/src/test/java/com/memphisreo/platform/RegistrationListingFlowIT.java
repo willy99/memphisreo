@@ -2,6 +2,7 @@ package com.memphisreo.platform;
 
 import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
 
+import com.memphisreo.platform.sale.SaleDtos.SaleView;
 import com.memphisreo.listing.Listing;
 import com.memphisreo.platform.api.AuthController;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
@@ -39,14 +40,14 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
         assertThat(property.id()).isNotNull();
         assertThat(property.status()).isEqualTo(Property.Status.DRAFT);
 
-        Listing listing = createListing(token, property.id());
-        assertThat(listing.getId()).isNotNull();
-        assertThat(listing.getStatus()).isEqualTo(Listing.Status.PUBLISHED);
+        SaleView sale = listProperty(token, property.id());
+        assertThat(sale.listingId()).isNotNull();
+        assertThat(sale.status()).isEqualTo(Listing.Status.ACTIVE);
 
-        ResponseEntity<Listing> fetched = restTemplate.exchange(
-                "/api/listings/" + listing.getId(), HttpMethod.GET, authed(token), Listing.class);
+        ResponseEntity<SaleView> fetched = restTemplate.exchange(
+                "/api/properties/" + property.id() + "/sale", HttpMethod.GET, authed(token), SaleView.class);
         assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(fetched.getBody().getId()).isEqualTo(listing.getId());
+        assertThat(fetched.getBody().listingId()).isEqualTo(sale.listingId());
     }
 
     @Test
@@ -56,7 +57,7 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
         register(slugA, emailA, "PasswordA123!", "UA");
         String tokenA = login(emailA, "PasswordA123!");
         PropertyDetails propertyA = createProperty(tokenA);
-        Listing listingA = createListing(tokenA, propertyA.id());
+        listProperty(tokenA, propertyA.id());
 
         String slugB = "iso-b-" + UUID.randomUUID().toString().substring(0, 8);
         String emailB = "admin@" + slugB + ".de";
@@ -64,14 +65,14 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
         String tokenB = login(emailB, "PasswordB123!");
 
         ResponseEntity<String> crossTenantRead = restTemplate.exchange(
-                "/api/listings/" + listingA.getId(), HttpMethod.GET, authed(tokenB), String.class);
+                "/api/properties/" + propertyA.id() + "/sale", HttpMethod.GET, authed(tokenB), String.class);
         assertThat(crossTenantRead.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void unauthenticatedRequest_isRejected() {
         ResponseEntity<String> response = restTemplate.exchange(
-                "/api/listings/" + UUID.randomUUID(), HttpMethod.GET, HttpEntity.EMPTY, String.class);
+                "/api/properties/" + UUID.randomUUID() + "/sale", HttpMethod.GET, HttpEntity.EMPTY, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 

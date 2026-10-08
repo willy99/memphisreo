@@ -1,5 +1,7 @@
 package com.memphisreo.platform.api;
 
+import com.memphisreo.activity.ActivityEvent.SubjectType;
+import com.memphisreo.activity.ActivityRecorder;
 import com.memphisreo.media.MediaService;
 import com.memphisreo.media.MediaView;
 import com.memphisreo.media.PropertyMedia;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -39,10 +42,20 @@ public class PropertyMediaController {
 
     private final MediaService mediaService;
     private final PropertyService propertyService;
+    private final ActivityRecorder activity;
+    private final org.springframework.transaction.support.TransactionTemplate tx;
 
-    public PropertyMediaController(MediaService mediaService, PropertyService propertyService) {
+    public PropertyMediaController(MediaService mediaService, PropertyService propertyService,
+                                   ActivityRecorder activity, org.springframework.transaction.support.TransactionTemplate tx) {
         this.mediaService = mediaService;
         this.propertyService = propertyService;
+        this.activity = activity;
+        this.tx = tx;
+    }
+
+    private void record(AuthenticatedAgent p, UUID propertyId, String type, Map<String, Object> payload) {
+        tx.executeWithoutResult(s -> activity.record(p.tenantId(), SubjectType.PROPERTY, propertyId, type, payload,
+                p.agentId(), true));
     }
 
     @GetMapping
@@ -65,6 +78,7 @@ public class PropertyMediaController {
                             file.getOriginalFilename(), content, file.getSize())
                     : mediaService.uploadImage(principal.tenantId(), propertyId, principal.agentId(), kind,
                             file.getOriginalFilename(), content, file.getSize());
+            record(principal, propertyId, "MEDIA_ADDED", Map.of("kind", kind.name()));
             return ResponseEntity.ok(view);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -76,8 +90,9 @@ public class PropertyMediaController {
     public ResponseEntity<MediaView> addLink(@AuthenticationPrincipal AuthenticatedAgent principal,
                                              @PathVariable UUID propertyId, @RequestBody LinkRequest request) {
         propertyService.get(propertyId);
-        return ResponseEntity.ok(mediaService.addVideoLink(principal.tenantId(), propertyId, principal.agentId(),
-                request.url()));
+        MediaView view = mediaService.addVideoLink(principal.tenantId(), propertyId, principal.agentId(), request.url());
+        record(principal, propertyId, "MEDIA_ADDED", Map.of("kind", "VIDEO_LINK"));
+        return ResponseEntity.ok(view);
     }
 
     @PutMapping("/order")
@@ -104,9 +119,11 @@ public class PropertyMediaController {
 
     @DeleteMapping("/{mediaId}")
     @PreAuthorize(CAN_EDIT)
-    public ResponseEntity<Void> delete(@PathVariable UUID propertyId, @PathVariable UUID mediaId) {
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal AuthenticatedAgent principal,
+                                       @PathVariable UUID propertyId, @PathVariable UUID mediaId) {
         propertyService.get(propertyId);
         mediaService.delete(propertyId, mediaId);
+        record(principal, propertyId, "MEDIA_REMOVED", Map.of());
         return ResponseEntity.noContent().build();
     }
 }

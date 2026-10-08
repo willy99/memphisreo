@@ -1,6 +1,7 @@
 package com.memphisreo.platform;
 
 import com.memphisreo.listing.Listing;
+import com.memphisreo.platform.sale.SaleDtos.SaleView;
 import com.memphisreo.platform.property.PropertyEditorDtos.Price;
 import com.memphisreo.platform.property.PropertyEditorDtos.PropertyCard;
 import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
@@ -62,10 +63,11 @@ class PropertyEditorIT extends AbstractIntegrationTest {
                 HttpMethod.POST, authed(token), PropertyDetails.class).getBody();
         assertThat(completed.status()).isEqualTo(Property.Status.ACTIVE);
 
-        Listing[] listings = restTemplate.exchange("/api/listings", HttpMethod.GET, authed(token), Listing[].class).getBody();
-        assertThat(listings).hasSize(1);
-        assertThat(listings[0].getStatus()).isEqualTo(Listing.Status.DRAFT);
-        assertThat(listings[0].getPropertyId()).isEqualTo(draft.id());
+        SaleView sale = restTemplate.exchange("/api/properties/" + draft.id() + "/sale", HttpMethod.GET, authed(token),
+                SaleView.class).getBody();
+        assertThat(sale.status()).isEqualTo(Listing.Status.DRAFT);
+        assertThat(sale.price()).isEqualByComparingTo("95000");
+        assertThat(sale.agents()).hasSize(1);
     }
 
     @Test

@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/tenant")
 public class TenantController {
 
-    public record UpdateTenantRequest(String name, Boolean autoCreateDealOnWon) {
+    public record UpdateTenantRequest(String name, Boolean autoCreateDealOnWon, String publicPhone, String publicEmail,
+                                      String website, String about, String publicCity) {
     }
 
     private final TenantRepository tenantRepository;
@@ -40,6 +41,15 @@ public class TenantController {
         if (request.autoCreateDealOnWon() != null) {
             tenant.setAutoCreateDealOnWon(request.autoCreateDealOnWon());
         }
+        tenant.setPublicPhone(blankToNull(request.publicPhone()));
+        tenant.setPublicEmail(blankToNull(request.publicEmail()));
+        tenant.setWebsite(blankToNull(request.website()));
+        tenant.setAbout(blankToNull(request.about()));
+        tenant.setPublicCity(blankToNull(request.publicCity()));
         return ResponseEntity.ok(tenantRepository.save(tenant));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

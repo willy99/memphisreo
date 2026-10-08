@@ -4,10 +4,10 @@ import com.memphisreo.platform.property.PropertyEditorDtos.PropertyDetails;
 
 import com.memphisreo.crm.Lead;
 import com.memphisreo.crm.LeadActivity;
-import com.memphisreo.inquiry.CreateInquiryRequest;
 import com.memphisreo.inquiry.Inquiry;
-import com.memphisreo.listing.CreateListingRequest;
-import com.memphisreo.listing.Listing;
+import com.memphisreo.listing.SaleForm;
+import com.memphisreo.platform.publicsite.PublicDtos.InquiryRequest;
+import com.memphisreo.platform.sale.SaleDtos.SaleView;
 import com.memphisreo.platform.api.LeadController;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
 import com.memphisreo.property.Property;
@@ -39,7 +39,7 @@ class TenantIsolationIT extends AbstractIntegrationTest {
     private String slugA;
     private String tokenA;
     private PropertyDetails propertyA;
-    private Listing listingA;
+    private SaleView listingA;
     private Lead leadA;
 
     private RegisterTenantResponse tenantB;
@@ -52,11 +52,11 @@ class TenantIsolationIT extends AbstractIntegrationTest {
         tenantA = register(slugA, "admin@" + slugA + ".ua", "PasswordA123!", "UA");
         tokenA = login("admin@" + slugA + ".ua", "PasswordA123!");
         propertyA = createProperty(tokenA);
-        listingA = createListing(tokenA, propertyA.id());
+        listingA = listProperty(tokenA, propertyA.id());
 
         Inquiry inquiryA = restTemplate.postForEntity(
-                "/api/public/tenants/" + slugA + "/listings/" + listingA.getId() + "/inquiries",
-                new CreateInquiryRequest("Покупець А", "buyer-a@example.com", null, "Цікавить"),
+                "/api/public/agencies/" + slugA + "/properties/" + propertyA.id() + "/inquiries",
+                new InquiryRequest("Покупець А", null, "buyer-a@example.com", "Цікавить"),
                 Inquiry.class).getBody();
         leadA = restTemplate.exchange("/api/inquiries/" + inquiryA.getId() + "/convert",
                 HttpMethod.POST, authed(tokenA), Lead.class).getBody();
@@ -69,13 +69,11 @@ class TenantIsolationIT extends AbstractIntegrationTest {
     @Test
     void api_otherAgencysRecordsAreInvisible() {
         assertThat(get("/api/properties/" + propertyA.id()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(get("/api/listings/" + listingA.getId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(get("/api/properties/" + propertyA.id() + "/sale").getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(get("/api/leads/" + leadA.getId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(get("/api/clients/" + leadA.getClientId()).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
         assertThat(restTemplate.exchange("/api/properties", HttpMethod.GET, authed(tokenB), com.memphisreo.platform.property.PropertyEditorDtos.PropertyCard[].class).getBody())
-                .isEmpty();
-        assertThat(restTemplate.exchange("/api/listings", HttpMethod.GET, authed(tokenB), Listing[].class).getBody())
                 .isEmpty();
         assertThat(restTemplate.exchange("/api/leads", HttpMethod.GET, authed(tokenB), Lead[].class).getBody())
                 .isEmpty();
@@ -98,15 +96,15 @@ class TenantIsolationIT extends AbstractIntegrationTest {
         assertThat(activity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
         ResponseEntity<String> listingOnForeignProperty = restTemplate.exchange(
-                "/api/listings", HttpMethod.POST,
-                authed(tokenB, new CreateListingRequest(propertyA.id(), Listing.DealType.SALE,
-                        new BigDecimal("1"), "USD")), String.class);
+                "/api/properties/" + propertyA.id() + "/sale", HttpMethod.PUT,
+                authed(tokenB, new SaleForm(new BigDecimal("1"), "USD", null, null, null, null, null, null, false)),
+                String.class);
         assertThat(listingOnForeignProperty.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
         // Публічна заявка: slug агенції B + лістинг агенції A — не знаходиться.
         ResponseEntity<String> crossInquiry = restTemplate.postForEntity(
-                "/api/public/tenants/" + slugB + "/listings/" + listingA.getId() + "/inquiries",
-                new CreateInquiryRequest("X", "x@example.com", null, null), String.class);
+                "/api/public/agencies/" + slugB + "/properties/" + propertyA.id() + "/inquiries",
+                new InquiryRequest("X", null, "x@example.com", null), String.class);
         assertThat(crossInquiry.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
         // Дані A не змінились.
@@ -139,7 +137,7 @@ class TenantIsolationIT extends AbstractIntegrationTest {
             // UPDATE чужого рядка: RLS ховає його — 0 змінених рядків.
             try (PreparedStatement update = app.prepareStatement(
                     "UPDATE app.listing SET price = 1 WHERE id = ?")) {
-                update.setObject(1, listingA.getId());
+                update.setObject(1, listingA.listingId());
                 assertThat(update.executeUpdate()).isZero();
             }
 

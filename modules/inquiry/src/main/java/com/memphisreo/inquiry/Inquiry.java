@@ -33,7 +33,7 @@ public class Inquiry {
     @Column(name = "contact_name", nullable = false)
     private String contactName;
 
-    @Column(name = "contact_email", nullable = false)
+    @Column(name = "contact_email")
     private String contactEmail;
 
     @Column(name = "contact_phone")
