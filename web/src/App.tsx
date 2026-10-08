@@ -21,6 +21,9 @@ import { OwnerPage } from "./pages/public/OwnerPage";
 import { AgentsPage } from "./pages/AgentsPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { ClientPage } from "./pages/ClientPage";
+import { PropertyShowingsPage } from "./pages/showings/PropertyShowingsPage";
+import { TasksPage } from "./pages/TasksPage";
+import { CalendarPage } from "./pages/CalendarPage";
 import { RolesPage } from "./pages/RolesPage";
 import { AcceptInvitePage } from "./pages/AcceptInvitePage";
 import { TenantSettingsPage } from "./pages/TenantSettingsPage";
@@ -58,10 +61,15 @@ function AgencyLayout() {
           <NavLink to="/dashboard" className="nav-link">
             {t("nav.dashboard")}
           </NavLink>
-          <NavDropdown
-            label={t("nav.workflow")}
-            items={[{ to: "/properties", label: t("nav.properties") }]}
-          />
+          <NavLink to="/properties" className="nav-link">
+            {t("nav.properties")}
+          </NavLink>
+          <NavLink to="/calendar" className="nav-link">
+            {t("nav.calendar")}
+          </NavLink>
+          <NavLink to="/tasks" className="nav-link">
+            {t("nav.tasks")}
+          </NavLink>
           <NavDropdown
             label={t("nav.people")}
             items={[
@@ -159,6 +167,9 @@ function AppRoutes() {
         <Route path="/properties/:propertyId" element={<PropertyEditorPage />} />
         <Route path="/properties/:propertyId/sale" element={<PropertySalePage />} />
         <Route path="/properties/:propertyId/history" element={<PropertyHistoryPage />} />
+        <Route path="/properties/:propertyId/showings" element={<PropertyShowingsPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/clients/:clientId" element={<ClientPage />} />

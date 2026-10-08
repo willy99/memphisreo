@@ -112,6 +112,16 @@
             </dependency>
             <dependency>
                 <groupId>com.memphisreo</groupId>
+                <artifactId>deal</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.memphisreo</groupId>
+                <artifactId>task</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.memphisreo</groupId>
                 <artifactId>media</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -179,6 +189,8 @@
         <module>modules/property</module>
         <module>modules/listing</module>
         <module>modules/activity</module>
+        <module>modules/deal</module>
+        <module>modules/task</module>
         <module>modules/media</module>
         <module>modules/search</module>
         <module>modules/inquiry</module>

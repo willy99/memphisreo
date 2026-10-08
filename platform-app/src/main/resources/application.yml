@@ -56,6 +56,8 @@ memphisreo:
   cell: ${MEMPHISREO_CELL:local-1}
   # Звідки фронт: посилання в листах (скидання пароля тощо).
   web-base-url: ${MEMPHISREO_WEB_BASE_URL:http://localhost:5173}
+  # Публічна адреса API (iCal-підписка, яку додають у зовнішні календарі).
+  api-base-url: ${MEMPHISREO_API_BASE_URL:http://localhost:8080}
   mail:
     from: ${MEMPHISREO_MAIL_FROM:Memphis <no-reply@memphisreo.local>}
   # Геокодування для форми об'єкта (проксі через бекенд). Публічний Photon — лише для розробки.

@@ -7,6 +7,9 @@ import type { Client, ClientDetails, ClientForm, ClientRequirement, ClientSource
 import { ChipGroup, Field, NumberInput, ToggleChips } from "../components/form/Field";
 import { StatusPill } from "../components/StatusPill";
 import { Timeline } from "../components/Timeline";
+import { ShowingCard } from "./showings/ShowingCard";
+import { ScheduleShowingDialog } from "./showings/ScheduleShowingDialog";
+import type { ShowingView } from "../api/types";
 import { CURRENCIES, FEATURE_GROUPS, PROPERTY_TYPES, SQM_PER_SOTKA } from "./properties/propertyFields";
 
 const SOURCES: ClientSource[] = ["WEBSITE_INQUIRY", "REFERRAL", "ADVERTISEMENT", "WALK_IN", "OTHER"];
@@ -18,6 +21,10 @@ export function ClientPage() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { clientId } = useParams();
+  /** undefined — діалог закрито; null — показ без обраного об'єкта; id — із підібраного об'єкта. */
+  const [scheduleFor, setScheduleFor] = useState<string | null | undefined>(undefined);
+  const [showingsKey, setShowingsKey] = useState(0);
+
   const [details, setDetails] = useState<ClientDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -79,7 +86,10 @@ export function ClientPage() {
             {details.matches.length > 0 && (
               <ul className="match-list">
                 {details.matches.map((m) => (
-                  <li key={m.property.id}>
+                  <li key={m.property.id} className="match-item">
+                    <button type="button" className="match-schedule" title={t("showings.schedule.button")} onClick={() => setScheduleFor(m.property.id)}>
+                      📅
+                    </button>
                     <Link to={`/properties/${m.property.id}/sale`} className="match-row">
                       {m.property.coverThumbUrl ? <img src={m.property.coverThumbUrl} alt="" /> : <span className="match-noimg" />}
                       <span className="match-body">
@@ -96,6 +106,8 @@ export function ClientPage() {
               </ul>
             )}
           </section>
+
+          <ClientShowingsCard token={token} clientId={clientId} reloadKey={showingsKey} onSchedule={() => setScheduleFor(null)} />
 
           <JournalCard token={token} clientId={clientId} entries={details.timeline} onChanged={(entries) => setDetails({ ...details, timeline: entries })} />
         </div>
@@ -116,6 +128,9 @@ export function ClientPage() {
           )}
         </aside>
       </div>
+      {scheduleFor !== undefined && (
+        <ScheduleShowingDialog token={token} clientId={clientId} propertyId={scheduleFor ?? undefined} onScheduled={() => { setScheduleFor(undefined); setShowingsKey((k) => k + 1); load(); }} onClose={() => setScheduleFor(undefined)} />
+      )}
       {toast && (
         <div className="toast" role="status">
           {toast}
@@ -334,6 +349,37 @@ function JournalCard({ token, clientId, entries, onChanged }: { token: string; c
         </div>
       </form>
       <Timeline entries={entries} emptyText={t("clientPage.noEvents")} />
+    </section>
+  );
+}
+
+/** Покази клієнта: майбутні згорнуто-повні, минулі — компактно. */
+function ClientShowingsCard({ token, clientId, reloadKey, onSchedule }: { token: string; clientId: string; reloadKey: number; onSchedule: () => void }) {
+  const { t } = useTranslation();
+  const [showings, setShowings] = useState<ShowingView[]>([]);
+  useEffect(() => {
+    api.get<ShowingView[]>(`/api/clients/${clientId}/showings`, token).then(setShowings).catch(() => setShowings([]));
+  }, [token, clientId, reloadKey]);
+  const upcoming = showings.filter((s) => s.status === "SCHEDULED" || s.status === "CONFIRMED").sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+  const past = showings.filter((s) => !(s.status === "SCHEDULED" || s.status === "CONFIRMED"));
+  const update = (v: ShowingView) => setShowings((list) => list.map((x) => (x.id === v.id ? v : x)));
+  return (
+    <section className="panel">
+      <div className="panel-head">
+        <h2>{t("showings.title")}</h2>
+        <button type="button" className="button-secondary" onClick={onSchedule}>
+          + {t("showings.schedule.button")}
+        </button>
+      </div>
+      {showings.length === 0 && <p className="hint">{t("showings.clientEmpty")}</p>}
+      <div className="showing-list">
+        {upcoming.map((s) => (
+          <ShowingCard key={s.id} token={token} showing={s} hide="client" onChanged={update} />
+        ))}
+        {past.map((s) => (
+          <ShowingCard key={s.id} token={token} showing={s} hide="client" compact onChanged={update} />
+        ))}
+      </div>
     </section>
   );
 }

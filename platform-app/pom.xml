@@ -47,6 +47,14 @@
         </dependency>
         <dependency>
             <groupId>com.memphisreo</groupId>
+            <artifactId>deal</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.memphisreo</groupId>
+            <artifactId>task</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.memphisreo</groupId>
             <artifactId>media</artifactId>
         </dependency>
         <dependency>

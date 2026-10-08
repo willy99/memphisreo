@@ -603,3 +603,92 @@ export interface ClientDetails {
   owned: OwnedProperty[];
   timeline: TimelineEntry[];
 }
+
+// ---------- Покази, задачі, календар ----------
+
+export type ShowingStatus = "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
+export type Objection = "PRICE" | "CONDITION" | "LOCATION" | "LAYOUT" | "OTHER";
+export type NextStep = "REPEAT_SHOWING" | "WAITING" | "OFFER" | "NOT_SUITABLE";
+export type TaskKind = "SHOWING" | "FEEDBACK" | "FOLLOW_UP" | "CUSTOM";
+export type TaskStatus = "OPEN" | "DONE" | "CANCELLED";
+
+export interface PropertyRef {
+  id: string;
+  title: string | null;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  coverUrl: string | null;
+  accessNotes: string | null;
+}
+
+export interface ClientRef {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+}
+
+export interface ShowingView {
+  id: string;
+  status: ShowingStatus;
+  scheduledAt: string;
+  durationMinutes: number;
+  notes: string | null;
+  cancelReason: string | null;
+  interest: number | null;
+  objection: Objection | null;
+  feedbackComment: string | null;
+  nextStep: NextStep | null;
+  feedbackAt: string | null;
+  property: PropertyRef | null;
+  clients: ClientRef[];
+  agent: AgentView | null;
+  createdAt: string;
+}
+
+export interface ShowingForm {
+  propertyId: string;
+  clientIds: string[];
+  agentId: string | null;
+  scheduledAt: string;
+  durationMinutes: number;
+  notes: string | null;
+  ignoreAgentOverlap: boolean;
+}
+
+export interface FeedbackForm {
+  interest: number;
+  objection: Objection | null;
+  comment: string | null;
+  nextStep: NextStep | null;
+}
+
+export interface TaskView {
+  id: string;
+  kind: TaskKind;
+  title: string;
+  status: TaskStatus;
+  dueAt: string;
+  note: string | null;
+  assignee: AgentView | null;
+  property: PropertyRef | null;
+  client: ClientRef | null;
+  showingId: string | null;
+  completedAt: string | null;
+}
+
+export interface CalendarView {
+  showings: ShowingView[];
+  tasks: TaskView[];
+}
+
+export interface TodaySummary {
+  showingsToday: number;
+  tasksToday: number;
+  overdueTasks: number;
+  newInquiries: number;
+  nextShowings: ShowingView[];
+  dueTasks: TaskView[];
+}

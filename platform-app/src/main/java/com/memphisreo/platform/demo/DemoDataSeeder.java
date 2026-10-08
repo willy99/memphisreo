@@ -5,6 +5,13 @@ import com.memphisreo.crm.Client;
 import com.memphisreo.crm.ClientForm;
 import com.memphisreo.crm.ClientService;
 import com.memphisreo.crm.RequirementForm;
+import com.memphisreo.deal.FeedbackForm;
+import com.memphisreo.deal.Showing;
+import com.memphisreo.deal.ShowingForm;
+import com.memphisreo.platform.showing.ShowingDtos.ShowingView;
+import com.memphisreo.platform.showing.ShowingWorkflowService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import com.memphisreo.media.MediaService;
 import com.memphisreo.media.PropertyMedia;
 import com.memphisreo.platform.agent.AgentInvitationService;
@@ -82,11 +89,13 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final MediaService mediaService;
     private final ClientService clientService;
     private final SaleService saleService;
+    private final ShowingWorkflowService showings;
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
     public DemoDataSeeder(TenantRepository tenantRepository, TenantRegistrationService registrationService,
                           AgentInvitationService invitationService, PropertyEditorService editorService,
-                          MediaService mediaService, ClientService clientService, SaleService saleService) {
+                          MediaService mediaService, ClientService clientService, SaleService saleService,
+                          ShowingWorkflowService showings) {
         this.tenantRepository = tenantRepository;
         this.registrationService = registrationService;
         this.invitationService = invitationService;
@@ -94,6 +103,7 @@ public class DemoDataSeeder implements ApplicationRunner {
         this.mediaService = mediaService;
         this.clientService = clientService;
         this.saleService = saleService;
+        this.showings = showings;
     }
 
     @Override
@@ -136,11 +146,13 @@ public class DemoDataSeeder implements ApplicationRunner {
             clientService.saveRequirement(tenantId, clients.get(5).getId(), new RequirementForm("COMMERCIAL", null, null, null,
                     null, "USD", new BigDecimal("60"), List.of("Центр"), null, List.of("SEPARATE_ENTRANCE"), null, true));
 
+            List<UUID> createdIds = new java.util.ArrayList<>();
             List<Seed> seeds = seeds();
             for (int i = 0; i < seeds.size(); i++) {
                 Seed seed = seeds.get(i);
                 UUID agentId = agents[i % agents.length];
                 PropertyDetails created = editorService.create(tenantId, agentId, seed.payload());
+                createdIds.add(created.id());
                 for (int p = 0; p < seed.photos().size(); p++) {
                     Photo photo = seed.photos().get(p);
                     byte[] bytes = fetch(photo.unsplashId(), photo.caption());
@@ -170,6 +182,23 @@ public class DemoDataSeeder implements ApplicationRunner {
                 }
                 log.info("  об'єкт {}/{}: {}", i + 1, seeds.size(), seed.payload().property().title());
             }
+
+            // Покази: два минулих з фідбеком, один завтра, один через три дні.
+            java.time.ZonedDateTime midnight = java.time.LocalDate.now(java.time.ZoneId.of("Europe/Kyiv")).atStartOfDay(java.time.ZoneId.of("Europe/Kyiv"));
+            Instant tomorrow = midnight.plusDays(1).plusHours(12).toInstant();
+            ShowingView past1 = showings.schedule(tenantId, agents[0], new ShowingForm(createdIds.get(0), List.of(clients.get(2).getId()),
+                    agents[0], midnight.minusDays(5).plusHours(11).toInstant(), 45, "Показ з родиною", true));
+            showings.complete(tenantId, agents[0], past1.id(), false);
+            showings.feedback(tenantId, agents[0], past1.id(), new FeedbackForm(4, null, "Дуже сподобалось, думають над бюджетом", Showing.NextStep.WAITING));
+            ShowingView past2 = showings.schedule(tenantId, agents[1], new ShowingForm(createdIds.get(1), List.of(clients.get(0).getId()),
+                    agents[1], midnight.minusDays(2).plusHours(16).toInstant(), 45, null, true));
+            showings.complete(tenantId, agents[1], past2.id(), false);
+            showings.feedback(tenantId, agents[1], past2.id(), new FeedbackForm(2, Showing.Objection.PRICE, "Хочуть торг до 130", Showing.NextStep.OFFER));
+            showings.schedule(tenantId, agents[0], new ShowingForm(createdIds.get(7), List.of(clients.get(4).getId()),
+                    agents[1], tomorrow, 60, "Ключі у власника, дзвонити за годину", true));
+            ShowingView confirmed = showings.schedule(tenantId, agents[0], new ShowingForm(createdIds.get(3), List.of(clients.get(1).getId()),
+                    agents[0], tomorrow.plus(2, ChronoUnit.DAYS).plus(4, ChronoUnit.HOURS), 30, null, true));
+            showings.confirm(confirmed.id());
         });
         log.info("Демо-агенцію створено: {} / {}", ADMIN_EMAIL, PASSWORD);
     }

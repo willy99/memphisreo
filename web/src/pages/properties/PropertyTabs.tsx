@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-/** Вкладки картки об'єкта: Огляд (редактор) · Продаж · Історія. Покази/Офери/Угода — далі. */
+/** Вкладки картки об'єкта: Огляд (редактор) · Продаж · Покази · Історія. Офери/Угода — далі. */
 export function PropertyTabs({ propertyId }: { propertyId: string }) {
   const { t } = useTranslation();
   const tabs = [
     { to: `/properties/${propertyId}`, label: t("propertyTabs.overview"), end: true },
     { to: `/properties/${propertyId}/sale`, label: t("propertyTabs.sale"), end: false },
+    { to: `/properties/${propertyId}/showings`, label: t("propertyTabs.showings"), end: false },
     { to: `/properties/${propertyId}/history`, label: t("propertyTabs.history"), end: false },
   ];
   return (

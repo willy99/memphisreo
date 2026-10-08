@@ -16,7 +16,9 @@
     "language": "Language",
     "theme": "Toggle light / dark",
     "dashboard": "Home",
-    "clients": "Clients"
+    "clients": "Clients",
+    "calendar": "Calendar",
+    "tasks": "Tasks"
   },
   "login": {
     "title": "Sign in",
@@ -205,7 +207,16 @@
     "subtitle": "Your agency at a glance",
     "agents": "Agents",
     "properties": "Properties",
-    "loadError": "Could not load statistics"
+    "loadError": "Could not load statistics",
+    "showingsToday": "showings today",
+    "tasksToday": "tasks due today",
+    "overdue": "overdue: {{count}}",
+    "newInquiries": "new inquiries",
+    "todayShowings": "Today's showings",
+    "todayTasks": "Today's tasks",
+    "noShowings": "No showings today — a good day to call clients.",
+    "noTasks": "No tasks due today.",
+    "allTasks": "All tasks"
   },
   "admin": {
     "badge": "Platform",
@@ -638,7 +649,8 @@
     "label": "Property sections",
     "overview": "Overview",
     "sale": "Sale",
-    "history": "History"
+    "history": "History",
+    "showings": "Showings"
   },
   "history": {
     "title": "Property history",
@@ -669,7 +681,13 @@
     "CONTACT_CALL": "Call: {{note}}",
     "CONTACT_MESSAGE": "Message: {{note}}",
     "CONTACT_MEETING": "Meeting: {{note}}",
-    "CONTACT_NOTE": "Note: {{note}}"
+    "CONTACT_NOTE": "Note: {{note}}",
+    "SHOWING_SCHEDULED": "Showing scheduled for {{at}}",
+    "SHOWING_RESCHEDULED": "Showing moved to {{at}}",
+    "SHOWING_CANCELLED": "Showing cancelled {{reason}}",
+    "SHOWING_COMPLETED": "Showing took place",
+    "SHOWING_NO_SHOW": "Client did not show up",
+    "SHOWING_FEEDBACK": "Showing feedback: interest {{interest}}/5"
   },
   "sale": {
     "notFound": "No sale set up for this property yet",
@@ -878,5 +896,130 @@
     "notePlaceholder": "What was agreed…",
     "addNote": "Add",
     "noEvents": "No entries yet"
+  },
+  "showings": {
+    "title": "Showings",
+    "property": "Property",
+    "agent": "Agent",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "stats": "{{total}} total, {{completed}} completed",
+    "avgInterest": "average interest {{avg}}",
+    "emptyTitle": "No showings yet",
+    "emptyHint": "Schedule the first showing — pick a client and a time. It appears in the agent's calendar and tasks right away.",
+    "clientEmpty": "Nothing has been shown to this client yet.",
+    "actionFailed": "Action failed",
+    "cancelPrompt": "Cancellation reason (optional):",
+    "cancelledBecause": "Cancelled: {{reason}}",
+    "confirmationText": "Confirming the viewing: {{when}}, {{address}}. Meet at the entrance. {{agent}}",
+    "steps": {
+      "SCHEDULED": "Scheduled",
+      "CONFIRMED": "Confirmed",
+      "COMPLETED": "Done",
+      "FEEDBACK": "Feedback"
+    },
+    "status": {
+      "SCHEDULED": "Scheduled",
+      "CONFIRMED": "Confirmed",
+      "COMPLETED": "Done",
+      "CANCELLED": "Cancelled",
+      "NO_SHOW": "No-show"
+    },
+    "actions": {
+      "confirm": "Confirm",
+      "complete": "Took place",
+      "noShow": "No-show",
+      "feedback": "Leave feedback",
+      "reschedule": "Reschedule",
+      "saveReschedule": "Save new time",
+      "copyConfirmation": "Copy confirmation",
+      "ics": ".ics for client",
+      "cancel": "Cancel"
+    },
+    "feedback": {
+      "interest": "Interest",
+      "objection": "Main objection",
+      "nextStep": "Next step",
+      "nextStepHint": "Leave empty and we create a “call back” task in 2 days.",
+      "comment": "Comment: what they liked, what they didn't…",
+      "save": "Save feedback"
+    },
+    "objections": {
+      "PRICE": "Price",
+      "CONDITION": "Condition",
+      "LOCATION": "Location",
+      "LAYOUT": "Layout",
+      "OTHER": "Other"
+    },
+    "nextSteps": {
+      "REPEAT_SHOWING": "Repeat showing",
+      "WAITING": "Waiting for decision",
+      "OFFER": "Offer coming",
+      "NOT_SUITABLE": "Not suitable"
+    },
+    "form": {
+      "when": "Date and time",
+      "duration": "Duration",
+      "minutes": "min",
+      "notes": "Note",
+      "notesPlaceholder": "Meet at the entrance, keys at the office…"
+    },
+    "schedule": {
+      "title": "Schedule a showing",
+      "button": "Schedule showing",
+      "clients": "Clients",
+      "me": "Me",
+      "submit": "Schedule"
+    },
+    "errors": {
+      "propertyBusy": "There is already a showing at this property at that time.",
+      "agentBusy": "The agent already has a showing at that time.",
+      "agentBusyConfirm": "The agent already has another showing at that time. Schedule anyway?",
+      "notForSale": "The property is not for sale — list it on the “Sale” tab first.",
+      "clientRequired": "Pick a client.",
+      "interestRequired": "Rate interest from 1 to 5.",
+      "notCompleted": "Feedback is only possible after a completed showing.",
+      "alreadyDone": "The showing is already finished.",
+      "pastTime": "Time is in the past."
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "subtitle": "Open: {{count}}",
+    "showDone": "show done",
+    "new": "New task",
+    "emptyTitle": "All done",
+    "emptyHint": "Tasks appear by themselves — after scheduling a showing and after feedback. Or add your own.",
+    "complete": "Done",
+    "save": "Add",
+    "groups": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "later": "Later",
+      "done": "Done"
+    },
+    "kinds": {
+      "SHOWING": "Showing",
+      "FEEDBACK": "Feedback",
+      "FOLLOW_UP": "Follow-up",
+      "CUSTOM": "Task"
+    },
+    "fields": {
+      "title": "What to do",
+      "due": "When",
+      "note": "Note"
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "mine": "Mine",
+    "agency": "Whole agency",
+    "subscribe": "Subscribe in Google / iPhone",
+    "subscribeHint": "Get a link and add it as a calendar by URL — showings and tasks appear on your phone.",
+    "subscribeConfirm": "Create a new subscription link? The previous one stops working.",
+    "subscribed": "Link copied: {{url}}"
   }
 }
