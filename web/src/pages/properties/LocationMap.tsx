@@ -18,6 +18,8 @@ interface LocationMapProps {
   /** Пін поставили/перетягнули на мапі (не з автодоповнення). */
   onPick: (latitude: number, longitude: number) => void;
   label: string;
+  /** Центр без точки: останнє місто агента (lat, lon). */
+  initialCenter?: [number, number] | null;
   /** Підказки MapLibre (жести тощо) мовою інтерфейсу. */
   locale: Record<string, string>;
 }
@@ -26,7 +28,7 @@ interface LocationMapProps {
  * Мапа з одним пін-ом. Клік — поставити пін, перетягування — уточнити.
  * Зовнішня зміна координат (вибір з автодоповнення) центрує мапу.
  */
-export default function LocationMap({ latitude, longitude, onPick, label, locale }: LocationMapProps) {
+export default function LocationMap({ latitude, longitude, onPick, label, locale, initialCenter }: LocationMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -47,8 +49,8 @@ export default function LocationMap({ latitude, longitude, onPick, label, locale
     const map = new MapLibreMap({
       container: containerRef.current,
       style: STYLE_URL,
-      center: hasPoint ? [longitude, latitude] : DEFAULT_CENTER,
-      zoom: hasPoint ? 16 : 10,
+      center: hasPoint ? [longitude, latitude] : initialCenter ? [initialCenter[1], initialCenter[0]] : DEFAULT_CENTER,
+      zoom: hasPoint ? 16 : initialCenter ? 12 : 10,
       attributionControl: { compact: true },
       cooperativeGestures: true,
       locale,

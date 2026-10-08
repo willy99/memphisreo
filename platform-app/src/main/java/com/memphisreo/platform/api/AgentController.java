@@ -6,6 +6,7 @@ import com.memphisreo.common.NotFoundException;
 import com.memphisreo.platform.agent.InviteAgentRequest;
 import com.memphisreo.platform.agent.InviteAgentResponse;
 import com.memphisreo.security.jwt.AuthenticatedAgent;
+import com.memphisreo.platform.agent.AgentAccountService;
 import com.memphisreo.platform.agent.AgentInvitationService;
 import com.memphisreo.security.rbac.RoleService;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +31,14 @@ public class AgentController {
     private final AgentRepository agentRepository;
     private final AgentInvitationService agentInvitationService;
     private final RoleService roleService;
+    private final AgentAccountService agentAccountService;
 
     public AgentController(AgentRepository agentRepository, AgentInvitationService agentInvitationService,
-                            RoleService roleService) {
+                            RoleService roleService, AgentAccountService agentAccountService) {
         this.agentRepository = agentRepository;
         this.agentInvitationService = agentInvitationService;
         this.roleService = roleService;
+        this.agentAccountService = agentAccountService;
     }
 
     @GetMapping
@@ -59,13 +62,14 @@ public class AgentController {
         return ResponseEntity.ok(agentInvitationService.invite(principal.tenantId(), request));
     }
 
+    /** Деактивація блокує й логін (AgentAccountService), не лише профіль. */
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).AGENT_MANAGE.name())")
     public ResponseEntity<Agent> updateStatus(@PathVariable UUID id, @RequestBody UpdateAgentStatusRequest request) {
+        agentAccountService.setActive(id, request.status() == Agent.Status.ACTIVE);
         Agent agent = agentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Agent не знайдено: " + id));
-        agent.setStatus(request.status());
-        return ResponseEntity.ok(agentRepository.save(agent));
+        return ResponseEntity.ok(agent);
     }
 
     @PatchMapping("/{id}/roles")

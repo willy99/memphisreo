@@ -17,6 +17,8 @@ export interface AddressValues {
   latitude: number | null;
   longitude: number | null;
   geocodeSource: "AUTOCOMPLETE" | "PIN" | "MANUAL" | null;
+  /** Куди центрувати мапу, поки точки ще немає (останнє місто агента). */
+  mapCenter?: [number, number] | null;
 }
 
 interface AddressSectionProps {
@@ -95,6 +97,7 @@ export function AddressSection(props: AddressSectionProps) {
           <LocationMap
             latitude={value.latitude}
             longitude={value.longitude}
+            initialCenter={value.mapCenter ?? null}
             onPick={handlePick}
             label={t("propertyForm.map.label")}
             locale={{
@@ -185,9 +188,10 @@ function AddressSearch({
     const timer = window.setTimeout(async () => {
       setLoading(true);
       const params = new URLSearchParams({ q });
-      if (bias.latitude !== null && bias.longitude !== null) {
-        params.set("lat", String(bias.latitude));
-        params.set("lon", String(bias.longitude));
+      const center = bias.latitude !== null && bias.longitude !== null ? [bias.latitude, bias.longitude] : bias.mapCenter;
+      if (center) {
+        params.set("lat", String(center[0]));
+        params.set("lon", String(center[1]));
       }
       try {
         const places = await api.get<GeoPlace[]>(`/api/geo/search?${params}`, token);
@@ -203,7 +207,7 @@ function AddressSearch({
       }
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [query, token, bias.latitude, bias.longitude]);
+  }, [query, token, bias.latitude, bias.longitude, bias.mapCenter]);
 
   function choose(place: GeoPlace) {
     onSelect(place);

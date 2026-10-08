@@ -249,6 +249,21 @@
       "properties": "Properties",
       "created": "Created",
       "address": "Address"
+    },
+    "agents": {
+      "title": "Agents",
+      "hint": "The email is the agent's login. Agents set their own password from the invite or via “Forgot password?”; an admin can issue a new one — shown once.",
+      "login": "Login",
+      "actions": "Actions",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "resetPassword": "New password",
+      "delete": "Delete",
+      "deleteConfirm": "Delete agent {{email}}? This cannot be undone.",
+      "resetConfirm": "Issue a new password for {{email}}? The agent's current sessions will end.",
+      "resetDone": "New password issued",
+      "actionFailed": "Action failed",
+      "hasData": "The agent has properties or deals — they can only be deactivated"
     }
   },
   "countries": {

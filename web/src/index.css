@@ -2823,3 +2823,24 @@ a.property-card:hover {
   text-decoration: none;
   color: var(--text);
 }
+
+.brand-agency {
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.actions-col {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actions-col .icon-button {
+  display: inline-flex;
+}
+
+.row-muted td {
+  color: var(--text-muted);
+}

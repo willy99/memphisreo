@@ -16,6 +16,7 @@ import {
 
 const AUTOSAVE_DELAY_MS = 1200;
 const LAST_TYPE_KEY = "memphisreo-last-property-type";
+const LAST_PLACE_KEY = "memphisreo-last-place";
 const EMPTY_ADDRESS: AddressValues = {
   city: "", district: "", region: "", street: "", houseNumber: "", postalCode: "", complexName: "",
   latitude: null, longitude: null, geocodeSource: null,
@@ -42,7 +43,8 @@ export function PropertyEditorPage() {
     type: (readLastType() ?? "APARTMENT") as PropertyType,
     values: { "price.currency": "USD" },
     features: [],
-    address: EMPTY_ADDRESS,
+    // Новий об'єкт — у тому ж місті/області, що й попередній; мапа центрується там само.
+    address: routeId ? EMPTY_ADDRESS : { ...EMPTY_ADDRESS, ...readLastPlace() },
   }));
   const [media, setMedia] = useState<MediaView[]>([]);
   const [loaded, setLoaded] = useState(!routeId);
@@ -107,6 +109,7 @@ export function PropertyEditorPage() {
         setStatus(details.status);
         setServerErrors({});
         setSavedAt(new Date());
+        rememberPlace(stateRef.current.address);
         setSaveState(dirtyRef.current ? "dirty" : "saved");
         return details.id;
       } catch (err) {
@@ -780,6 +783,27 @@ function omit(record: Record<string, string>, key: string) {
   const copy = { ...record };
   delete copy[key];
   return copy;
+}
+
+/** Останнє місто агента: місто, район, область і центр мапи (без вулиці/будинку). */
+function readLastPlace(): Partial<AddressValues> {
+  try {
+    const raw = localStorage.getItem(LAST_PLACE_KEY);
+    if (!raw) return {};
+    const place = JSON.parse(raw) as { city?: string; region?: string; latitude?: number; longitude?: number };
+    return { city: place.city ?? "", region: place.region ?? "", mapCenter: place.latitude != null && place.longitude != null ? [place.latitude, place.longitude] : null };
+  } catch {
+    return {};
+  }
+}
+
+function rememberPlace(address: AddressValues) {
+  if (!address.city) return;
+  try {
+    localStorage.setItem(LAST_PLACE_KEY, JSON.stringify({ city: address.city, region: address.region, latitude: address.latitude, longitude: address.longitude }));
+  } catch {
+    // сховище недоступне — просто не запам'ятовуємо
+  }
 }
 
 function readLastType(): string | null {

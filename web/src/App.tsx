@@ -1,5 +1,8 @@
 import { Link, NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
+import { api } from "./api/client";
+import type { TenantSummaryLite } from "./api/types";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { PlatformAuthProvider, usePlatformAuth } from "./auth/PlatformAuthContext";
 import { ThemeProvider } from "./theme/ThemeContext";
@@ -33,6 +36,11 @@ import { BrandMark } from "./components/AuthScreen";
 function AgencyLayout() {
   const { t } = useTranslation();
   const { token, logout } = useAuth();
+  const [agency, setAgency] = useState<TenantSummaryLite | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    api.get<TenantSummaryLite>("/api/tenant/summary", token).then(setAgency).catch(() => setAgency(null));
+  }, [token]);
   if (!token) {
     return <Navigate to="/login" replace />;
   }
@@ -43,6 +51,7 @@ function AgencyLayout() {
         <Link to="/dashboard" className="brand">
           <BrandMark />
           {t("app.name")}
+          {agency && <span className="brand-agency">{agency.name}</span>}
         </Link>
         <nav className="nav-groups">
           <NavLink to="/dashboard" className="nav-link">

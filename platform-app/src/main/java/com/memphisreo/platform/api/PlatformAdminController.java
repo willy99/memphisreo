@@ -4,6 +4,10 @@ import com.memphisreo.platform.platformadmin.PlatformAdminDtos.PropertyRow;
 import com.memphisreo.platform.platformadmin.PlatformAdminDtos.TenantPage;
 import com.memphisreo.platform.platformadmin.PlatformAdminDtos.TenantSummary;
 import com.memphisreo.platform.platformadmin.PlatformTenantService;
+import com.memphisreo.platform.agent.AgentAccountService;
+import com.memphisreo.platform.agent.AgentAccountService.AgentAccount;
+import com.memphisreo.platform.agent.AgentAccountService.ResetPassword;
+import com.memphisreo.common.TenantContext;
 import com.memphisreo.platform.registration.RegisterTenantRequest;
 import com.memphisreo.platform.registration.RegisterTenantResponse;
 import com.memphisreo.platform.registration.TenantRegistrationService;
@@ -36,13 +40,19 @@ public class PlatformAdminController {
     private final PlatformLoginService platformLoginService;
     private final PlatformTenantService platformTenantService;
     private final TenantRegistrationService tenantRegistrationService;
+    private final AgentAccountService agentAccountService;
 
     public PlatformAdminController(PlatformLoginService platformLoginService,
                                    PlatformTenantService platformTenantService,
-                                   TenantRegistrationService tenantRegistrationService) {
+                                   TenantRegistrationService tenantRegistrationService,
+                                   AgentAccountService agentAccountService) {
         this.platformLoginService = platformLoginService;
         this.platformTenantService = platformTenantService;
         this.tenantRegistrationService = tenantRegistrationService;
+        this.agentAccountService = agentAccountService;
+    }
+
+    public record AgentStatusRequest(boolean active) {
     }
 
     @PostMapping("/auth/login")
@@ -79,5 +89,43 @@ public class PlatformAdminController {
                                                               @PathVariable UUID tenantId) {
         log.info("platform-admin {} переглядає об'єкти агенції {}", staffId, tenantId);
         return ResponseEntity.ok(platformTenantService.properties(tenantId));
+    }
+
+    // ---------- Агенти агенції (від імені агенції, під її RLS) ----------
+
+    @GetMapping("/tenants/{tenantId}/agents")
+    @PreAuthorize(IS_PLATFORM_ADMIN)
+    public ResponseEntity<List<AgentAccount>> tenantAgents(@AuthenticationPrincipal UUID staffId, @PathVariable UUID tenantId) {
+        platformTenantService.get(tenantId);
+        log.info("platform-admin {} переглядає агентів агенції {}", staffId, tenantId);
+        return ResponseEntity.ok(TenantContext.callAs(tenantId, () -> agentAccountService.list(tenantId)));
+    }
+
+    @PatchMapping("/tenants/{tenantId}/agents/{agentId}/status")
+    @PreAuthorize(IS_PLATFORM_ADMIN)
+    public ResponseEntity<AgentAccount> setAgentStatus(@AuthenticationPrincipal UUID staffId, @PathVariable UUID tenantId,
+                                                       @PathVariable UUID agentId, @RequestBody AgentStatusRequest request) {
+        platformTenantService.get(tenantId);
+        log.info("platform-admin {} {} агента {} в агенції {}", staffId, request.active() ? "активує" : "деактивує", agentId, tenantId);
+        return ResponseEntity.ok(TenantContext.callAs(tenantId, () -> agentAccountService.setActive(agentId, request.active())));
+    }
+
+    @PostMapping("/tenants/{tenantId}/agents/{agentId}/reset-password")
+    @PreAuthorize(IS_PLATFORM_ADMIN)
+    public ResponseEntity<ResetPassword> resetAgentPassword(@AuthenticationPrincipal UUID staffId, @PathVariable UUID tenantId,
+                                                            @PathVariable UUID agentId) {
+        platformTenantService.get(tenantId);
+        log.info("platform-admin {} скидає пароль агента {} в агенції {}", staffId, agentId, tenantId);
+        return ResponseEntity.ok(TenantContext.callAs(tenantId, () -> agentAccountService.resetPassword(agentId)));
+    }
+
+    @DeleteMapping("/tenants/{tenantId}/agents/{agentId}")
+    @PreAuthorize(IS_PLATFORM_ADMIN)
+    public ResponseEntity<Void> deleteAgent(@AuthenticationPrincipal UUID staffId, @PathVariable UUID tenantId,
+                                            @PathVariable UUID agentId) {
+        platformTenantService.get(tenantId);
+        log.info("platform-admin {} видаляє агента {} в агенції {}", staffId, agentId, tenantId);
+        TenantContext.runAs(tenantId, () -> agentAccountService.delete(agentId));
+        return ResponseEntity.noContent().build();
     }
 }

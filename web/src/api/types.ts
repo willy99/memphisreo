@@ -514,3 +514,28 @@ export interface OwnerReport {
   ownerFirstName: string;
   properties: OwnerProperty[];
 }
+
+// ---------- Адмінка: агенти агенції ----------
+
+export interface AgentAccount {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  status: AgentStatus;
+  loginStatus: "PENDING_INVITE" | "ACTIVE" | "DISABLED" | null;
+  createdAt: string;
+  deletable: boolean;
+}
+
+export interface ResetPassword {
+  email: string;
+  password: string;
+}
+
+export interface TenantSummaryLite {
+  name: string;
+  slug: string;
+  publicPhone: string | null;
+}

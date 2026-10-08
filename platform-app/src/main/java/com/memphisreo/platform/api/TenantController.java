@@ -23,6 +23,17 @@ public class TenantController {
         this.tenantRepository = tenantRepository;
     }
 
+    public record TenantSummary(String name, String slug, String publicPhone) {
+    }
+
+    /** Для шапки кабінету — будь-який автентифікований агент. */
+    @GetMapping("/summary")
+    public ResponseEntity<TenantSummary> summary(@AuthenticationPrincipal AuthenticatedAgent principal) {
+        Tenant tenant = tenantRepository.findById(principal.tenantId())
+                .orElseThrow(() -> new NotFoundException("Tenant не знайдено: " + principal.tenantId()));
+        return ResponseEntity.ok(new TenantSummary(tenant.getName(), tenant.getSlug(), tenant.getPublicPhone()));
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority(T(com.memphisreo.security.rbac.Permission).TENANT_SETTINGS_MANAGE.name())")
     public ResponseEntity<Tenant> get(@AuthenticationPrincipal AuthenticatedAgent principal) {

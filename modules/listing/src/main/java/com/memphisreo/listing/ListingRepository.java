@@ -22,4 +22,6 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     List<Listing> findByStatus(Listing.Status status);
 
     Optional<Listing> findFirstByPropertyIdOrderByCreatedAtDesc(UUID propertyId);
+
+    boolean existsByAgentId(UUID agentId);
 }
