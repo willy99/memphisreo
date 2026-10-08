@@ -9,7 +9,12 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
 import { PropertyEditorPage } from "./pages/properties/PropertyEditorPage";
-import { ListingsPage } from "./pages/ListingsPage";
+import { PropertySalePage } from "./pages/properties/PropertySalePage";
+import { PropertyHistoryPage } from "./pages/properties/PropertyHistoryPage";
+import { PublicLayout } from "./pages/public/PublicLayout";
+import { PublicAgencyPage } from "./pages/public/PublicAgencyPage";
+import { PublicPropertyPage } from "./pages/public/PublicPropertyPage";
+import { OwnerPage } from "./pages/public/OwnerPage";
 import { AgentsPage } from "./pages/AgentsPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { RolesPage } from "./pages/RolesPage";
@@ -45,10 +50,7 @@ function AgencyLayout() {
           </NavLink>
           <NavDropdown
             label={t("nav.workflow")}
-            items={[
-              { to: "/properties", label: t("nav.properties") },
-              { to: "/listings", label: t("nav.listings") },
-            ]}
+            items={[{ to: "/properties", label: t("nav.properties") }]}
           />
           <NavDropdown
             label={t("nav.people")}
@@ -129,6 +131,11 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route path="/owner/:token" element={<OwnerPage />} />
+      <Route path="/p/:slug" element={<PublicLayout />}>
+        <Route index element={<PublicAgencyPage />} />
+        <Route path=":propertyId" element={<PublicPropertyPage />} />
+      </Route>
 
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminTenantsPage />} />
@@ -140,7 +147,8 @@ function AppRoutes() {
         <Route path="/properties" element={<PropertiesPage />} />
         <Route path="/properties/new" element={<PropertyEditorPage key="new" />} />
         <Route path="/properties/:propertyId" element={<PropertyEditorPage />} />
-        <Route path="/listings" element={<ListingsPage />} />
+        <Route path="/properties/:propertyId/sale" element={<PropertySalePage />} />
+        <Route path="/properties/:propertyId/history" element={<PropertyHistoryPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/roles" element={<RolesPage />} />

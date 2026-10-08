@@ -8,6 +8,7 @@ import { ChipGroup, CountChips, Field, NumberInput, ToggleChips } from "../../co
 import { StatusPill } from "../../components/StatusPill";
 import { AddressSection, type AddressValues } from "./AddressSection";
 import { MediaSection } from "./MediaSection";
+import { PropertyTabs } from "./PropertyTabs";
 import {
   COMMERCIAL_TYPES, CONDITIONS, CURRENCIES, FEATURE_GROUPS, FEATURE_GROUPS_BY_TYPE, HEATING, LAND_PURPOSES, MARKETS,
   PROPERTY_TYPES, SECTIONS, SQM_PER_SOTKA, VISIBLE_FIELDS, WALL_MATERIALS, sectionOf, type SectionId,
@@ -182,7 +183,7 @@ export function PropertyEditorPage() {
     try {
       const details = await api.post<PropertyDetails>(`/api/properties/${savedId}/complete`, {}, token!);
       setStatus(details.status);
-      setToast({ message: t("propertyForm.completed") });
+      setToast({ message: t("propertyForm.completed"), action: { label: t("propertyTabs.sale"), run: () => (window.location.href = `/properties/${savedId}/sale`) } });
     } catch (err) {
       if (err instanceof ApiError && err.errors.length) {
         setServerErrors(Object.fromEntries(err.errors.map((e) => [e.field, e.code])));
@@ -318,6 +319,7 @@ export function PropertyEditorPage() {
           </Link>
           <h1>{id ? t("propertyForm.titleEdit") : t("propertyForm.titleNew")}</h1>
           <StatusPill status={status} />
+          {id && <PropertyTabs propertyId={id} />}
         </div>
         <div className="editor-actions">
           <SaveIndicator state={saveState} savedAt={savedAt} onRetry={() => void save()} />

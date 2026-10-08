@@ -22,7 +22,7 @@ export type PropertyType = "APARTMENT" | "HOUSE" | "LAND" | "COMMERCIAL" | "OTHE
 export type PropertyStatus = "DRAFT" | "ACTIVE" | "RESERVED" | "SOLD" | "RENTED" | "ARCHIVED";
 
 export type DealType = "SALE" | "LONG_TERM_RENT" | "SHORT_TERM_RENT";
-export type ListingStatus = "DRAFT" | "PUBLISHED" | "RESERVED" | "CLOSED" | "EXPIRED" | "ARCHIVED";
+export type ListingStatus = "DRAFT" | "ACTIVE" | "UNDER_OFFER" | "SOLD" | "WITHDRAWN" | "EXPIRED";
 
 export interface Listing {
   id: string;
@@ -109,6 +109,11 @@ export interface Tenant {
   region: string;
   status: string;
   subscriptionPlan: string | null;
+  publicPhone: string | null;
+  publicEmail: string | null;
+  website: string | null;
+  about: string | null;
+  publicCity: string | null;
 }
 
 export interface TenantStats {
@@ -303,4 +308,209 @@ export interface ClientForm {
   phone: string | null;
   source: ClientSource;
   notes: string | null;
+}
+
+// ---------- Продаж, агенти, історія ----------
+
+export type MandateType = "EXCLUSIVE" | "NON_EXCLUSIVE";
+export type PropertyAgentRole = "LEAD" | "CO_AGENT";
+
+export interface SellerView {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface AgentView {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  email: string | null;
+  role: PropertyAgentRole | null;
+}
+
+export interface PricePoint {
+  price: number;
+  currency: string;
+  changedAt: string;
+}
+
+export interface SaleView {
+  listingId: string;
+  status: ListingStatus;
+  price: number | null;
+  currency: string;
+  seller: SellerView | null;
+  mandateType: MandateType | null;
+  mandateValidUntil: string | null;
+  commissionPercent: number | null;
+  commissionFixed: number | null;
+  accessNotes: string | null;
+  hideExactAddress: boolean;
+  withdrawnReason: string | null;
+  publishedAt: string | null;
+  closedAt: string | null;
+  priceHistory: PricePoint[];
+  agents: AgentView[];
+  publicUrl: string | null;
+  blockers: string[];
+}
+
+export interface SaleForm {
+  price: number | null;
+  currency: string | null;
+  sellerClientId: string | null;
+  mandateType: MandateType | null;
+  mandateValidUntil: string | null;
+  commissionPercent: number | null;
+  commissionFixed: number | null;
+  accessNotes: string | null;
+  hideExactAddress: boolean;
+}
+
+export interface TimelineEntry {
+  id: string;
+  type: string;
+  payload: Record<string, unknown>;
+  actor: AgentView | null;
+  ownerVisible: boolean;
+  createdAt: string;
+}
+
+export interface OwnerLink {
+  url: string;
+  expiresAt: string;
+}
+
+// ---------- Публічна сторінка агенції ----------
+
+export interface AgencyInfo {
+  slug: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  about: string | null;
+  city: string | null;
+  activeListings: number;
+}
+
+export interface PublicAgent {
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface PublicCard {
+  id: string;
+  type: PropertyType;
+  title: string | null;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  complexName: string | null;
+  price: number | null;
+  currency: string | null;
+  areaSqm: number | null;
+  landAreaSqm: number | null;
+  rooms: number | null;
+  floor: number | null;
+  totalFloors: number | null;
+  coverUrl: string | null;
+  photoCount: number;
+  latitude: number | null;
+  longitude: number | null;
+  approximateLocation: boolean;
+  publishedAt: string | null;
+  priceReduced: boolean;
+}
+
+export interface PublicPhoto {
+  url: string | null;
+  thumbUrl: string | null;
+  caption: string | null;
+}
+
+export interface PublicDetails {
+  id: string;
+  type: PropertyType;
+  title: string | null;
+  description: string | null;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  complexName: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  approximateLocation: boolean;
+  price: number | null;
+  currency: string | null;
+  areaSqm: number | null;
+  livingAreaSqm: number | null;
+  kitchenAreaSqm: number | null;
+  landAreaSqm: number | null;
+  rooms: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  floor: number | null;
+  totalFloors: number | null;
+  yearBuilt: number | null;
+  ceilingHeightM: number | null;
+  market: string | null;
+  wallMaterial: string | null;
+  condition: string | null;
+  heating: string | null;
+  landPurpose: string | null;
+  commercialType: string | null;
+  hasElevator: boolean | null;
+  parkingSpaces: number | null;
+  features: string[];
+  photos: PublicPhoto[];
+  floorplans: PublicPhoto[];
+  videoUrls: string[];
+  agents: PublicAgent[];
+  agency: AgencyInfo;
+  publishedAt: string | null;
+  similar: PublicCard[];
+}
+
+export interface SearchResult {
+  items: PublicCard[];
+  total: number;
+  page: number;
+  size: number;
+  districts: string[];
+  minPrice: number | null;
+  maxPrice: number | null;
+}
+
+// ---------- Кабінет власника ----------
+
+export interface OwnerProperty {
+  id: string;
+  title: string | null;
+  type: PropertyType;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  status: ListingStatus;
+  price: number | null;
+  currency: string;
+  coverUrl: string | null;
+  publishedAt: string | null;
+  timeline: TimelineEntry[];
+}
+
+export interface OwnerReport {
+  agencyName: string;
+  agencyPhone: string | null;
+  ownerFirstName: string;
+  properties: OwnerProperty[];
 }

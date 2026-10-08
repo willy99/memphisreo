@@ -8,7 +8,6 @@
     "people": "People",
     "setup": "Setup",
     "properties": "Properties",
-    "listings": "Listings",
     "agents": "Agents",
     "roles": "Roles",
     "agencySettings": "Agency settings",
@@ -157,7 +156,14 @@
     "saved": "Saved",
     "loadError": "Could not load settings",
     "saveError": "Could not save",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "publicTitle": "Public page",
+    "publicHint": "Buyers see this on the agency page:",
+    "publicPhone": "Phone",
+    "publicEmail": "Email",
+    "publicCity": "City",
+    "website": "Website",
+    "about": "About the agency"
   },
   "profile": {
     "title": "My profile",
@@ -562,7 +568,9 @@
     "VIEWING_SCHEDULED": "Viewing scheduled",
     "NEGOTIATING": "Negotiating",
     "WON": "Won",
-    "LOST": "Lost"
+    "LOST": "Lost",
+    "UNDER_OFFER": "Under offer",
+    "WITHDRAWN": "Withdrawn"
   },
   "clients": {
     "title": "Clients",
@@ -610,5 +618,199 @@
       "contactRequired": "Enter a phone or an email",
       "duplicate": "A contact with this email already exists"
     }
+  },
+  "propertyTabs": {
+    "label": "Property sections",
+    "overview": "Overview",
+    "sale": "Sale",
+    "history": "History"
+  },
+  "history": {
+    "title": "Property history",
+    "empty": "No events yet",
+    "loadError": "Could not load history"
+  },
+  "timeline": {
+    "internal": "internal",
+    "PROPERTY_CREATED": "Property created",
+    "PROPERTY_COMPLETED": "Property details completed",
+    "PRICE_SET": "Price set to {{price}}",
+    "PRICE_CHANGED": "Price changed: {{previousPrice}} → {{price}}",
+    "SELLER_SET": "Owner assigned",
+    "LISTED": "Listed for sale",
+    "RELISTED": "Back on the market",
+    "WITHDRAWN": "Withdrawn from sale {{reason}}",
+    "UNDER_OFFER": "Offer accepted — under offer",
+    "BACK_TO_MARKET": "Deal cancelled — back on the market",
+    "SOLD": "Sold {{finalPrice}}",
+    "MANDATE_EXPIRED": "Mandate expired ({{validUntil}})",
+    "MEDIA_ADDED": "Added: {{kind}}",
+    "MEDIA_REMOVED": "Media removed",
+    "AGENTS_CHANGED": "Responsible agents changed: {{agents}}",
+    "INQUIRY_RECEIVED": "Website inquiry from {{name}}",
+    "CLIENT_CREATED": "Contact created",
+    "OWNER_LINK_ISSUED": "Owner link issued"
+  },
+  "sale": {
+    "notFound": "No sale set up for this property yet",
+    "loadError": "Could not load sale data",
+    "statusTitle": "Sale status",
+    "statusHint": {
+      "DRAFT": "Not listed yet. Fill in the details and the price, then click “List for sale”.",
+      "ACTIVE": "On the market: visible on the public page, share the link with buyers.",
+      "UNDER_OFFER": "An offer was accepted — the deal is in progress.",
+      "SOLD": "Sale closed.",
+      "WITHDRAWN": "Withdrawn. You can relist at any time.",
+      "EXPIRED": "The mandate expired — extend it and relist."
+    },
+    "listedSince": "Listed since {{date}}",
+    "withdrawnReason": "Reason: {{reason}}",
+    "closedAt": "Closed {{date}}",
+    "blockers": {
+      "price": "Set a price",
+      "propertyDraft": "Complete the property details (Overview tab)",
+      "mandateExpired": "The mandate has expired — update the date",
+      "status": "This transition isn't possible now",
+      "generic": "Action failed"
+    },
+    "actions": {
+      "activate": "List for sale",
+      "withdraw": "Withdraw",
+      "relist": "Relist",
+      "sold": "Mark as sold"
+    },
+    "done": {
+      "activate": "Listed for sale",
+      "withdraw": "Withdrawn",
+      "relist": "Back on the market",
+      "sold": "Marked as sold"
+    },
+    "withdrawPrompt": "Reason for withdrawing (optional):",
+    "soldPrompt": "Final sale price:",
+    "actionFailed": "Action failed",
+    "saved": "Saved",
+    "saveError": "Could not save",
+    "saving": "Saving…",
+    "save": "Save",
+    "readOnlySold": "Sale closed — no further changes",
+    "formTitle": "Sale terms",
+    "sellerTitle": "Owner",
+    "sellerSearch": "Find a contact by name or phone…",
+    "changeSeller": "Change",
+    "createClient": "+ Create a new contact (Clients)",
+    "issueOwnerLink": "Owner link",
+    "ownerLinkHint": "The owner sees a report on their properties without logging in",
+    "ownerLinkIssued": "Link copied, valid until {{date}}",
+    "ownerLinkCopied": "Owner link copied",
+    "mandateTitle": "Mandate & commission",
+    "mandate": {
+      "EXCLUSIVE": "Exclusive",
+      "NON_EXCLUSIVE": "Non-exclusive"
+    },
+    "fields": {
+      "mandateType": "Agreement with the owner",
+      "mandateValidUntil": "Mandate valid until",
+      "commissionPercent": "Commission, %",
+      "commissionFixed": "Fixed commission",
+      "accessNotes": "Access to the property",
+      "accessHint": "Keys in the office / arrange with the owner / lock code — agents only",
+      "hideExactAddress": "Hide the exact address on the public page",
+      "hideExactAddressHint": "buyers see the district and an approximate circle on the map"
+    },
+    "accessTitle": "Access",
+    "errors": {
+      "mandateExpired": "The mandate has expired",
+      "invalidTransition": "Invalid status transition"
+    },
+    "shareTitle": "Share",
+    "shareHint": "Public page for buyers — copy the link or a ready message for Viber/Telegram.",
+    "copyLink": "Copy link",
+    "copyMessage": "Copy message",
+    "linkCopied": "Link copied",
+    "messageCopied": "Message copied",
+    "copyManually": "Copy manually:",
+    "shareMessage": "Hello! Here is the property we discussed — {{price}}. Photos, plan and details: {{url}}",
+    "priceHistory": "Price history",
+    "agentsTitle": "Responsible agents",
+    "editAgents": "Edit",
+    "agentsSaved": "Agents updated",
+    "leadAgent": "Lead agent",
+    "coAgents": "Co-agents",
+    "role": {
+      "LEAD": "lead",
+      "CO_AGENT": "co-agent"
+    }
+  },
+  "public": {
+    "agencyNotFound": "Agency not found",
+    "propertyNotFound": "Property not found or already sold",
+    "backToList": "All properties",
+    "poweredBy": "Powered by Memphis",
+    "found": "{{count}} properties found",
+    "nothingFound": "Nothing matches these filters — try changing them",
+    "viewList": "List",
+    "viewMap": "Map",
+    "pagination": "Pages",
+    "approximate": "approximate location",
+    "approximateHint": "The agent will share the exact address when arranging a viewing.",
+    "floors": "{{count}} floors",
+    "call": "Call",
+    "listingId": "ID {{id}}",
+    "published": "listed {{date}}",
+    "filters": {
+      "type": "Type",
+      "anyType": "All types",
+      "rooms": "Rooms",
+      "anyRooms": "Any",
+      "priceFrom": "Price from, $",
+      "priceTo": "to, $",
+      "district": "District",
+      "anyDistrict": "All districts",
+      "more": "More filters",
+      "market": "Market",
+      "any": "Any",
+      "area": "Area",
+      "from": "from",
+      "to": "to",
+      "features": "Must have",
+      "reset": "Reset filters"
+    },
+    "sort": {
+      "label": "Sort",
+      "newest": "Newest first",
+      "priceAsc": "Cheapest",
+      "priceDesc": "Most expensive",
+      "areaDesc": "Largest"
+    },
+    "badges": {
+      "new": "New",
+      "reduced": "Price reduced"
+    },
+    "sections": {
+      "facts": "Key facts",
+      "description": "Description",
+      "features": "Amenities",
+      "location": "Location",
+      "similar": "Similar properties"
+    },
+    "inquiry": {
+      "title": "Ask about this property",
+      "name": "Your name",
+      "phone": "Phone",
+      "message": "Message (optional)",
+      "submit": "Send",
+      "sending": "Sending…",
+      "sent": "Thank you! The agent will contact you shortly.",
+      "error": "Could not send — please call us",
+      "hint": "We never share your contact details."
+    }
+  },
+  "owner": {
+    "hello": "Hello, {{name}}!",
+    "subtitle": "Your properties with the agency: {{count}}",
+    "timeline": "What happened",
+    "noEvents": "No events yet",
+    "invalid": "This link is invalid or expired",
+    "invalidHint": "Ask your agent for a new link."
   }
 }
