@@ -67,9 +67,11 @@ CREATE POLICY tenant_isolation ON property
   `BYPASSRLS`; права видають міграції), логін застосунку в цій групі
   (облікові дані — від інфраструктури; локально — `memphisreo_app_user`
   з `docker/postgres/init`). Роль `memphisreo_platform` з `BYPASSRLS`
-  (platform admin, фонові job-и) — з'явиться разом із першим
-  крос-тенантним сценарієм; до того схему `search` (без RLS) пише
-  `memphisreo_app`.
+  — лише коли з'явиться сценарій, якому справді потрібні дані всіх
+  агенцій одним запитом (аналітика, білінг). Платформна адмінка її НЕ
+  потребує: дані агенції читає від її імені (`TenantContext.callAs`),
+  під тими самими RLS-політиками (security.md §11). Схему `search`
+  (без RLS) поки пише `memphisreo_app`.
 
 ### Рубіж 3 — цілісність посилань
 

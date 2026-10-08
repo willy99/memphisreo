@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -13,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -62,12 +64,16 @@ public class SecurityConfig {
     public SecurityFilterChain platformAdminFilterChain(
             HttpSecurity http,
             @Qualifier("platformJwtService") JwtService platformJwtService,
-            @Qualifier("platformTokenRevocationCheck") TokenRevocationCheck platformTokenRevocationCheck) throws Exception {
+            @Qualifier("platformTokenRevocationCheck") TokenRevocationCheck platformTokenRevocationCheck,
+            CorsConfigurationSource corsConfigurationSource) throws Exception {
 
         var filter = new PlatformJwtAuthenticationFilter(platformJwtService, platformTokenRevocationCheck);
 
         http.securityMatcher("/platform-admin/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
+                // Немає/протермінований токен → 401 (фронт веде на логін); бракує прав → 403.
+                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/platform-admin/auth/**").permitAll()
@@ -90,6 +96,7 @@ public class SecurityConfig {
         http.securityMatcher("/api/**")
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
@@ -99,7 +106,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Dev-фронтенд (Vite) на іншому origin — тільки /api/**, platform-admin CORS не потребує. */
+    /** Dev-фронтенд (Vite) на іншому origin: і tenant API, і платформна адмінка. */
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${memphisreo.security.cors-allowed-origins:http://localhost:5173}") List<String> allowedOrigins) {
@@ -110,6 +117,7 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/platform-admin/**", configuration);
         return source;
     }
 }

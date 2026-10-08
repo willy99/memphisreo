@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Єдине місце в системі, що орхеструє tenant+agent+security модулі разом —
@@ -33,6 +34,10 @@ import java.util.UUID;
  */
 @Service
 public class TenantRegistrationService {
+
+    private static final Pattern SLUG = Pattern.compile("^[a-z0-9](?:[a-z0-9-]{1,48}[a-z0-9])$");
+    private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    static final int MIN_PASSWORD_LENGTH = 8;
 
     private final TenantRepository tenantRepository;
     private final CountryRepository countryRepository;
@@ -65,6 +70,7 @@ public class TenantRegistrationService {
     }
 
     public RegisterTenantResponse register(RegisterTenantRequest request) {
+        validate(request);
         UUID tenantId = UUID.randomUUID();
         return TenantContext.callAs(tenantId,
                 () -> transactionTemplate.execute(status -> registerInTransaction(tenantId, request)));
@@ -113,5 +119,28 @@ public class TenantRegistrationService {
         accountIdentityRepository.save(account);
 
         return new RegisterTenantResponse(tenantId, adminAgent.getId());
+    }
+
+    static void validate(RegisterTenantRequest request) {
+        requireText(request.agencyName(), "Назва агенції");
+        requireText(request.adminFirstName(), "Ім'я адміністратора");
+        requireText(request.adminLastName(), "Прізвище адміністратора");
+        requireText(request.countryCode(), "Країна");
+        if (request.slug() == null || !SLUG.matcher(request.slug()).matches()) {
+            throw new IllegalArgumentException(
+                    "Slug: 3–50 символів, малі латинські літери, цифри й дефіс, без дефіса на краях");
+        }
+        if (request.adminEmail() == null || !EMAIL.matcher(request.adminEmail()).matches()) {
+            throw new IllegalArgumentException("Некоректний email адміністратора");
+        }
+        if (request.adminPassword() == null || request.adminPassword().length() < MIN_PASSWORD_LENGTH) {
+            throw new IllegalArgumentException("Пароль — щонайменше " + MIN_PASSWORD_LENGTH + " символів");
+        }
+    }
+
+    private static void requireText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(field + ": обов'язкове поле");
+        }
     }
 }

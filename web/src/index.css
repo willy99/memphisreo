@@ -100,11 +100,52 @@ h2 {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 14px;
   letter-spacing: -0.01em;
   color: var(--text-h);
   white-space: nowrap;
+  text-decoration: none;
+}
+
+.brand .brand-mark {
+  color: var(--accent);
+}
+
+.admin-badge {
+  font-size: 10.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.nav-link {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--text-h);
+  background: var(--bg-subtle);
+}
+
+.nav-link.active {
+  color: var(--text-h);
+  border-bottom-color: var(--accent);
 }
 
 .nav-groups {
@@ -496,4 +537,311 @@ select:focus-visible,
   border-radius: 4px;
   padding: 2px 6px;
   color: var(--text-muted);
+}
+
+/* ---------- Загальні дрібниці сторінок ---------- */
+
+.page-subtitle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+.section-title {
+  margin: 32px 0 12px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+.strong {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.table th.num,
+.table td.num {
+  text-align: right;
+}
+
+.table-clickable tbody tr {
+  cursor: pointer;
+}
+
+.table-clickable tbody tr:hover td {
+  background: var(--bg-subtle);
+}
+
+.panel {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+
+.form-section {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-h);
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.mono-input {
+  font-family: var(--mono) !important;
+  font-size: 13px !important;
+}
+
+.button-block {
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 14px;
+}
+
+.button-link {
+  display: inline-block;
+  text-align: center;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: 6px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.button-link:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------- Статистика ---------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 720px;
+}
+
+.stat-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.stat-link:hover .stat-card {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.stat-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-h);
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ---------- Екран входу: фото на весь екран, форма по центру ---------- */
+
+.auth-screen {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  isolation: isolate;
+}
+
+.auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  /* Фото: Unsplash (вільна ліцензія, hotlink дозволено). Градієнт — фолбек без мережі й контраст для тексту. */
+  background:
+    linear-gradient(115deg, rgba(8, 24, 21, 0.86) 0%, rgba(8, 24, 21, 0.55) 45%, rgba(8, 24, 21, 0.25) 100%),
+    url("https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80") center / cover no-repeat,
+    linear-gradient(135deg, #0b3d35, #14161a);
+}
+
+.auth-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.auth-brand .brand-mark {
+  width: 26px;
+  height: 26px;
+  color: #6fe0c8;
+}
+
+.auth-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.auth-controls .icon-button {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.auth-controls .icon-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.auth-center {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 32px 28px;
+  border-radius: 16px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-raised) 90%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.auth-card h1 {
+  font-size: 24px;
+}
+
+.auth-subtitle {
+  margin: 6px 0 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.auth-badge {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.auth-form {
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.auth-form input {
+  padding: 10px 12px;
+  font-size: 15px;
+}
+
+.auth-card .auth-note {
+  margin: 12px 0 20px;
+  font-size: 14px;
+}
+
+.auth-link {
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.auth-tagline {
+  margin: 0;
+  padding: 0 28px 22px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 520px) {
+  .auth-topline {
+    padding: 14px 16px;
+  }
+
+  .auth-card {
+    padding: 28px 20px 22px;
+  }
+
+  .auth-tagline {
+    padding: 0 16px 16px;
+  }
+
+  main {
+    padding: 20px 16px;
+  }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Запускає все локальне оточення одним скриптом:
-#   Docker (Postgres + S3/RustFS) → бекенд (http://localhost:8080) → фронт (http://localhost:5173).
+#   Docker (Postgres + S3/RustFS + Mailpit) → бекенд (http://localhost:8080) → фронт (http://localhost:5173).
 # Ctrl+C зупиняє бекенд і фронт; контейнери лишаються (docker compose stop — щоб зупинити).
 #
 #   ./dev.sh           — звичайний запуск
@@ -20,6 +20,24 @@ for arg in "$@"; do
         *) echo "Невідомий аргумент: $arg (див. --help)"; exit 1 ;;
     esac
 done
+
+# Локальні секрети (gitignored): супер-адмін платформи. Генеруються один раз;
+# бекенд створює адміна з них, якщо його ще немає (тож і після --reset).
+# Видалиш файл без --reset — новий пароль розійдеться з тим, що вже в БД.
+ENV_FILE=".env.local"
+if [ ! -f "$ENV_FILE" ]; then
+    cat > "$ENV_FILE" <<ENVEOF
+# Згенеровано dev.sh — лише для локальної розробки, не комітити.
+MEMPHISREO_BOOTSTRAP_ADMIN_EMAIL=willy2005@gmail.com
+MEMPHISREO_BOOTSTRAP_ADMIN_PASSWORD=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
+ENVEOF
+    chmod 600 "$ENV_FILE"
+    echo "==> Створено $ENV_FILE з паролем супер-адміна"
+fi
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
 
 LOG_DIR=".dev-logs"
 mkdir -p "$LOG_DIR"
@@ -81,12 +99,13 @@ if $RESET; then
     docker compose down -v
 fi
 
-step "Postgres + S3 (RustFS)"
+step "Postgres + S3 (RustFS) + Mailpit"
 if ! docker compose up -d; then
     echo "    docker compose не зміг підняти контейнери — див. помилку вище"; exit 1
 fi
 wait_for "Postgres" 90 sh -c '[ "$(docker inspect --format={{.State.Health.Status}} memphisreo-postgres)" = healthy ]' || exit 1
 wait_for "S3 (RustFS)" 60 sh -c '[ "$(docker inspect --format={{.State.Health.Status}} memphisreo-s3)" = healthy ]' || exit 1
+wait_for "Mailpit" 60 sh -c '[ "$(docker inspect --format={{.State.Health.Status}} memphisreo-mailpit)" = healthy ]' || exit 1
 echo "    ок"
 
 # Логін застосунку створює init-скрипт лише на СВІЖОМУ томі (ADR-001).
@@ -144,6 +163,9 @@ cat <<EOF
   Все запущено:
     Фронт         http://localhost:5173
     Бекенд        http://localhost:8080   (лог: $BACKEND_LOG)
+    Супер-адмін   http://localhost:5173/admin/login
+                  $MEMPHISREO_BOOTSTRAP_ADMIN_EMAIL / пароль у $ENV_FILE
+    Пошта (dev)   http://localhost:8025   (листи скидання пароля)
     S3 console    http://localhost:9001/rustfs/console/   (memphisreo / memphisreo123)
     Postgres      localhost:5432          (memphisreo / memphisreo)
 

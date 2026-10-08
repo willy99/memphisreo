@@ -20,8 +20,9 @@
 
 ## Команди
 
-- **Усе одразу:** `./dev.sh` — Docker (Postgres + S3) → бекенд :8080 → фронт :5173,
-  логи в `.dev-logs/`. `./dev.sh --reset` — з нуля (видаляє локальні дані),
+- **Усе одразу:** `./dev.sh` — Docker (Postgres + S3 + Mailpit) → бекенд :8080 →
+  фронт :5173, логи в `.dev-logs/`. Супер-адмін: `/admin/login`, облікові дані —
+  у gitignored `.env.local` (генерує dev.sh). Листи — http://localhost:8025. `./dev.sh --reset` — з нуля (видаляє локальні дані),
   `--skip-build` — без перезбірки бекенду.
 - Лише інфраструктура: `docker compose up -d`. Логін застосунку створюється
   init-скриптом лише на свіжому томі: після зміни `docker/postgres/init` —

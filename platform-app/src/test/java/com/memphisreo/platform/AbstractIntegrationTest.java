@@ -14,6 +14,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import com.memphisreo.common.mail.EmailSender;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,7 +35,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,6 +57,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class AbstractIntegrationTest {
 
+    protected static final String PLATFORM_ADMIN_EMAIL = "platform-admin@test.local";
+    protected static final String PLATFORM_ADMIN_PASSWORD = "PlatformAdmin123!";
     protected static final String APP_DB_USER = "memphisreo_app_user";
     protected static final String APP_DB_PASSWORD = "memphisreo_app";
 
@@ -77,7 +83,12 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.password", () -> APP_DB_PASSWORD);
         registry.add("spring.flyway.user", POSTGRES::getUsername);
         registry.add("spring.flyway.password", POSTGRES::getPassword);
+        registry.add("memphisreo.bootstrap-admin.email", () -> PLATFORM_ADMIN_EMAIL);
+        registry.add("memphisreo.bootstrap-admin.password", () -> PLATFORM_ADMIN_PASSWORD);
     }
+
+    @Autowired
+    protected RecordingEmailSender emailSender;
 
     @Autowired
     protected TestRestTemplate restTemplate;
@@ -94,6 +105,34 @@ public abstract class AbstractIntegrationTest {
         RestTemplateBuilder restTemplateBuilder() {
             return new RestTemplateBuilder().requestFactory(() -> new JdkClientHttpRequestFactory());
         }
+
+        /** Замість SMTP — листи складаються в пам'ять, тест читає їх звідти. */
+        @Bean
+        @Primary
+        RecordingEmailSender recordingEmailSender() {
+            return new RecordingEmailSender();
+        }
+    }
+
+    protected static class RecordingEmailSender implements EmailSender {
+        private final List<Email> sent = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void send(Email email) {
+            sent.add(email);
+        }
+
+        public List<Email> sentTo(String address) {
+            return sent.stream().filter(e -> e.to().equals(address)).toList();
+        }
+    }
+
+    protected String platformLogin() {
+        ResponseEntity<LoginService.LoginResult> response = restTemplate.postForEntity("/platform-admin/auth/login",
+                new AuthController.LoginRequest(PLATFORM_ADMIN_EMAIL, PLATFORM_ADMIN_PASSWORD),
+                LoginService.LoginResult.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().accessToken();
     }
 
     protected RegisterTenantResponse register(String slug, String email, String password, String countryCode) {

@@ -22,7 +22,11 @@ import java.util.Set;
 @Service
 public class LoginService {
 
-    private static final Duration ACCESS_TOKEN_TTL = Duration.ofMinutes(15);
+    /**
+     * Тимчасово довгий TTL: refresh-токенів ще немає (docs/security.md §4),
+     * а миттєве відкликання вже працює через token_version.
+     */
+    private static final Duration ACCESS_TOKEN_TTL = Duration.ofHours(8);
 
     private final AccountIdentityRepository accountIdentityRepository;
     private final PasswordEncoder passwordEncoder;

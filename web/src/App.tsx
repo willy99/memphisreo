@@ -1,8 +1,12 @@
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { PlatformAuthProvider, usePlatformAuth } from "./auth/PlatformAuthContext";
 import { ThemeProvider } from "./theme/ThemeContext";
 import { LoginPage } from "./pages/LoginPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
+import { DashboardPage } from "./pages/DashboardPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
 import { ListingsPage } from "./pages/ListingsPage";
 import { AgentsPage } from "./pages/AgentsPage";
@@ -10,114 +14,131 @@ import { RolesPage } from "./pages/RolesPage";
 import { AcceptInvitePage } from "./pages/AcceptInvitePage";
 import { TenantSettingsPage } from "./pages/TenantSettingsPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { AdminLoginPage } from "./pages/admin/AdminLoginPage";
+import { AdminTenantsPage } from "./pages/admin/AdminTenantsPage";
+import { AdminTenantPage } from "./pages/admin/AdminTenantPage";
 import { NavDropdown } from "./components/NavDropdown";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { BrandMark } from "./components/AuthScreen";
 
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth();
+/** Кабінет агенції: верхня панель + сторінки; без сесії — на логін. */
+function AgencyLayout() {
+  const { t } = useTranslation();
+  const { token, logout } = useAuth();
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-  return <>{children}</>;
-}
-
-function Layout() {
-  const { t } = useTranslation();
-  const { token, logout } = useAuth();
 
   return (
     <div className="app-shell">
       <header className="topbar">
-        <span className="brand">{t("app.name")}</span>
-        {token && (
-          <nav className="nav-groups">
-            <NavDropdown
-              label={t("nav.workflow")}
-              items={[
-                { to: "/properties", label: t("nav.properties") },
-                { to: "/listings", label: t("nav.listings") },
-              ]}
-            />
-            <NavDropdown label={t("nav.people")} items={[{ to: "/agents", label: t("nav.agents") }]} />
-            <NavDropdown
-              label={t("nav.setup")}
-              items={[
-                { to: "/roles", label: t("nav.roles") },
-                { to: "/settings", label: t("nav.agencySettings") },
-              ]}
-            />
-          </nav>
-        )}
-        {token && (
-          <div className="icon-cluster">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <Link to="/profile" className="icon-button" title={t("nav.profile")} aria-label={t("nav.profile")}>
-              👤
-            </Link>
-            <button className="icon-button" onClick={logout} title={t("nav.logout")} aria-label={t("nav.logout")}>
-              ⏻
-            </button>
-          </div>
-        )}
+        <Link to="/dashboard" className="brand">
+          <BrandMark />
+          {t("app.name")}
+        </Link>
+        <nav className="nav-groups">
+          <NavLink to="/dashboard" className="nav-link">
+            {t("nav.dashboard")}
+          </NavLink>
+          <NavDropdown
+            label={t("nav.workflow")}
+            items={[
+              { to: "/properties", label: t("nav.properties") },
+              { to: "/listings", label: t("nav.listings") },
+            ]}
+          />
+          <NavDropdown label={t("nav.people")} items={[{ to: "/agents", label: t("nav.agents") }]} />
+          <NavDropdown
+            label={t("nav.setup")}
+            items={[
+              { to: "/roles", label: t("nav.roles") },
+              { to: "/settings", label: t("nav.agencySettings") },
+            ]}
+          />
+        </nav>
+        <div className="icon-cluster">
+          <LanguageSwitcher />
+          <ThemeToggle />
+          <Link to="/profile" className="icon-button" title={t("nav.profile")} aria-label={t("nav.profile")}>
+            👤
+          </Link>
+          <button className="icon-button" onClick={logout} title={t("nav.logout")} aria-label={t("nav.logout")}>
+            ⏻
+          </button>
+        </div>
       </header>
       <main>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/accept-invite" element={<AcceptInvitePage />} />
-          <Route
-            path="/properties"
-            element={
-              <RequireAuth>
-                <PropertiesPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/listings"
-            element={
-              <RequireAuth>
-                <ListingsPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/agents"
-            element={
-              <RequireAuth>
-                <AgentsPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/roles"
-            element={
-              <RequireAuth>
-                <RolesPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <RequireAuth>
-                <TenantSettingsPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <RequireAuth>
-                <ProfilePage />
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<Navigate to={token ? "/properties" : "/login"} replace />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
+  );
+}
+
+/** Платформна адмінка: окремий realm і окремий токен. */
+function AdminLayout() {
+  const { t } = useTranslation();
+  const { token, logout } = usePlatformAuth();
+  if (!token) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="topbar topbar-admin">
+        <Link to="/admin" className="brand">
+          <BrandMark />
+          {t("app.name")}
+          <span className="admin-badge">{t("admin.badge")}</span>
+        </Link>
+        <nav className="nav-groups">
+          <NavLink to="/admin" end className="nav-link">
+            {t("admin.tenantsTitle")}
+          </NavLink>
+        </nav>
+        <div className="icon-cluster">
+          <LanguageSwitcher />
+          <ThemeToggle />
+          <button className="icon-button" onClick={logout} title={t("nav.logout")} aria-label={t("nav.logout")}>
+            ⏻
+          </button>
+        </div>
+      </header>
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+function AppRoutes() {
+  const { token } = useAuth();
+
+  return (
+    <Routes>
+      <Route path="/login" element={token ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
+
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminTenantsPage />} />
+        <Route path="tenants/:tenantId" element={<AdminTenantPage />} />
+      </Route>
+
+      <Route element={<AgencyLayout />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/listings" element={<ListingsPage />} />
+        <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/roles" element={<RolesPage />} />
+        <Route path="/settings" element={<TenantSettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
+    </Routes>
   );
 }
 
@@ -125,7 +146,9 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Layout />
+        <PlatformAuthProvider>
+          <AppRoutes />
+        </PlatformAuthProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api/client";
 import type { AcceptInviteRequest } from "../api/types";
+import { AuthScreen } from "../components/AuthScreen";
 
 export function AcceptInvitePage() {
   const { t } = useTranslation();
@@ -30,25 +31,32 @@ export function AcceptInvitePage() {
 
   if (!token) {
     return (
-      <div className="page page-narrow">
+      <AuthScreen title={t("acceptInvite.title")}>
         <p className="error">{t("acceptInvite.missingToken")}</p>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div className="page page-narrow">
-      <h1>{t("acceptInvite.title")}</h1>
-      <form onSubmit={handleSubmit} className="form">
+    <AuthScreen title={t("acceptInvite.title")}>
+      <form onSubmit={handleSubmit} className="form auth-form">
         <label>
           {t("acceptInvite.password")}
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            autoFocus
+          />
         </label>
         {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={submitting}>
+        <button type="submit" className="button-block" disabled={submitting}>
           {submitting ? t("acceptInvite.submitting") : t("acceptInvite.submit")}
         </button>
       </form>
-    </div>
+    </AuthScreen>
   );
 }

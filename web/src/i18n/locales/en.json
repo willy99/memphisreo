@@ -1,5 +1,8 @@
 {
-  "app": { "name": "Memphisreo" },
+  "app": {
+    "name": "Memphis",
+    "tagline": "The platform for real estate agencies"
+  },
   "nav": {
     "workflow": "Workflow",
     "people": "People",
@@ -12,7 +15,8 @@
     "profile": "Profile",
     "logout": "Log out",
     "language": "Language",
-    "theme": "Toggle light / dark"
+    "theme": "Toggle light / dark",
+    "dashboard": "Home"
   },
   "login": {
     "title": "Sign in",
@@ -20,7 +24,10 @@
     "password": "Password",
     "submit": "Sign in",
     "submitting": "Signing in…",
-    "error": "Could not sign in"
+    "error": "Could not sign in. Please try again.",
+    "subtitle": "Sign in to manage your agency's properties",
+    "forgot": "Forgot password?",
+    "invalid": "Wrong email or password"
   },
   "properties": {
     "title": "Properties",
@@ -29,7 +36,13 @@
     "loadError": "Could not load properties",
     "createError": "Could not create property",
     "empty": "No properties yet",
-    "columns": { "type": "Type", "area": "Area", "rooms": "Rooms", "status": "Status", "id": "ID" },
+    "columns": {
+      "type": "Type",
+      "area": "Area",
+      "rooms": "Rooms",
+      "status": "Status",
+      "id": "ID"
+    },
     "form": {
       "type": "Type",
       "area": "Area, m²",
@@ -50,7 +63,12 @@
     "createError": "Could not create listing",
     "empty": "No listings yet",
     "needProperty": "Add a property on the Properties tab first.",
-    "columns": { "dealType": "Deal type", "price": "Price", "status": "Status", "propertyId": "Property ID" },
+    "columns": {
+      "dealType": "Deal type",
+      "price": "Price",
+      "status": "Status",
+      "propertyId": "Property ID"
+    },
     "form": {
       "property": "Property",
       "dealType": "Deal type",
@@ -69,10 +87,19 @@
     "statusError": "Could not change status",
     "empty": "No other agents yet",
     "inviteBanner": "Invite created for <bold>{{email}}</bold>. There's no email delivery yet — copy and send the link yourself (valid 7 days):",
-    "columns": { "name": "Name", "email": "Email", "status": "Status" },
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "status": "Status"
+    },
     "activate": "Activate",
     "deactivate": "Deactivate",
-    "form": { "firstName": "First name", "lastName": "Last name", "email": "Email", "submit": "Invite" }
+    "form": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "submit": "Invite"
+    }
   },
   "roles": {
     "title": "Roles",
@@ -83,7 +110,10 @@
     "deleteError": "Could not delete role",
     "builtIn": "(built-in)",
     "delete": "Delete",
-    "form": { "name": "Role name", "submit": "Create role" },
+    "form": {
+      "name": "Role name",
+      "submit": "Create role"
+    },
     "categories": {
       "property": "Property",
       "listings": "Listings",
@@ -118,5 +148,95 @@
     "email": "Email",
     "status": "Status",
     "loadError": "Could not load profile"
+  },
+  "forgot": {
+    "title": "Reset your password",
+    "subtitle": "Enter your account email — we'll send you a link and a code to reset your password.",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "error": "Could not send the request. Please try later.",
+    "sentTitle": "Check your inbox",
+    "sent": "If an account for {{email}} exists, we've sent it an email with a link and a code. They're valid for 30 minutes.",
+    "haveCode": "I have a code from the email",
+    "backToLogin": "Back to sign in"
+  },
+  "reset": {
+    "title": "New password",
+    "subtitle": "Choose a new password for your account.",
+    "code": "Code from the email",
+    "password": "New password",
+    "confirm": "Repeat password",
+    "rule": "At least {{min}} characters.",
+    "submit": "Save password",
+    "submitting": "Saving…",
+    "tooShort": "Password must be at least {{min}} characters",
+    "mismatch": "Passwords don't match",
+    "invalidCode": "The link or code is invalid or expired. Request a new email.",
+    "error": "Could not change the password",
+    "doneTitle": "Password changed",
+    "done": "Sign in with your new password. Other sessions of this account were ended.",
+    "toLogin": "Go to sign in"
+  },
+  "dashboard": {
+    "title": "Home",
+    "subtitle": "Your agency at a glance",
+    "agents": "Agents",
+    "properties": "Properties",
+    "loadError": "Could not load statistics"
+  },
+  "admin": {
+    "badge": "Platform",
+    "loginTitle": "Platform administration",
+    "loginSubtitle": "For Memphis staff only",
+    "tenantsTitle": "Agencies",
+    "total": "Total: {{count}}",
+    "newTenant": "New agency",
+    "cancel": "Cancel",
+    "empty": "No agencies yet",
+    "loadError": "Could not load data",
+    "notFound": "Agency not found",
+    "createError": "Could not create the agency",
+    "formTitle": "New agency",
+    "adminSection": "Agency administrator",
+    "rolesHint": "The agency gets the built-in roles “Tenant Admin” and “Agent”; the administrator is assigned “Tenant Admin”.",
+    "generate": "Generate",
+    "create": "Create agency",
+    "creating": "Creating…",
+    "createdTitle": "Agency “{{name}}” created",
+    "createdHint": "Share these sign-in details with the administrator — the password isn't shown anywhere else. It can be changed via “Forgot password?”.",
+    "backToList": "All agencies",
+    "since": "since {{date}}",
+    "propertiesTitle": "Properties",
+    "unit": "apt.",
+    "fields": {
+      "agencyName": "Agency name",
+      "slug": "Slug (identifier)",
+      "slugHint": "3–50 characters: lowercase latin letters, digits, hyphen",
+      "country": "Country",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "password": "Initial password"
+    },
+    "columns": {
+      "name": "Name",
+      "slug": "Slug",
+      "country": "Country",
+      "status": "Status",
+      "agents": "Agents",
+      "properties": "Properties",
+      "created": "Created",
+      "address": "Address"
+    }
+  },
+  "countries": {
+    "UA": "Ukraine",
+    "DE": "Germany"
+  },
+  "propertyTypes": {
+    "APARTMENT": "Apartment",
+    "HOUSE": "House",
+    "LAND": "Land",
+    "COMMERCIAL": "Commercial",
+    "OTHER": "Other"
   }
 }

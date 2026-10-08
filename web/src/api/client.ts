@@ -1,12 +1,26 @@
 const API_BASE_URL = "http://localhost:8080";
 
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
   }
+}
+
+export type Realm = "tenant" | "platform";
+
+// 401 = токена немає або він протермінований/відкликаний → відповідний
+// контекст автентифікації розлогінює користувача (403 — це "бракує прав").
+const unauthorizedHandlers: Partial<Record<Realm, () => void>> = {};
+
+export function onUnauthorized(realm: Realm, handler: () => void) {
+  unauthorizedHandlers[realm] = handler;
+}
+
+function realmOf(path: string): Realm {
+  return path.startsWith("/platform-admin") ? "platform" : "tenant";
 }
 
 async function request<T>(path: string, options: RequestInit & { token?: string } = {}): Promise<T> {
@@ -21,6 +35,9 @@ async function request<T>(path: string, options: RequestInit & { token?: string 
   });
 
   if (!response.ok) {
+    if (response.status === 401 && token) {
+      unauthorizedHandlers[realmOf(path)]?.();
+    }
     const body = await response.text();
     let message = body;
     try {

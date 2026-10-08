@@ -70,7 +70,7 @@ class RegistrationListingFlowIT extends AbstractIntegrationTest {
     void unauthenticatedRequest_isRejected() {
         ResponseEntity<String> response = restTemplate.exchange(
                 "/api/listings/" + UUID.randomUUID(), HttpMethod.GET, HttpEntity.EMPTY, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test

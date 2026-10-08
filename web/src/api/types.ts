@@ -160,3 +160,43 @@ export interface Tenant {
   status: string;
   subscriptionPlan: string | null;
 }
+
+export interface TenantStats {
+  agents: number;
+  properties: number;
+}
+
+export type TenantStatus = "TRIAL" | "ACTIVE" | "SUSPENDED" | "CHURNED";
+
+export interface TenantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  countryCode: string;
+  region: string;
+  status: TenantStatus;
+  createdAt: string;
+  agents: number;
+  properties: number;
+}
+
+export interface TenantPage {
+  items: TenantSummary[];
+  page: number;
+  size: number;
+  total: number;
+}
+
+export interface PlatformPropertyRow {
+  id: string;
+  type: PropertyType;
+  status: PropertyStatus;
+  areaSqm: number;
+  rooms: number | null;
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  unitNumber: string | null;
+  createdAt: string;
+}

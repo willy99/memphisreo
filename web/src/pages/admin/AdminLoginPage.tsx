@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../auth/AuthContext";
-import { ApiError } from "../api/client";
-import { AuthScreen } from "../components/AuthScreen";
+import { usePlatformAuth } from "../../auth/PlatformAuthContext";
+import { ApiError } from "../../api/client";
+import { AuthScreen } from "../../components/AuthScreen";
 
-export function LoginPage() {
+export function AdminLoginPage() {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login } = usePlatformAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/admin");
     } catch (err) {
       setError(err instanceof ApiError && err.status === 403 ? t("login.invalid") : t("login.error"));
     } finally {
@@ -29,7 +29,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthScreen title={t("login.title")} subtitle={t("login.subtitle")}>
+    <AuthScreen title={t("admin.loginTitle")} subtitle={t("admin.loginSubtitle")} badge={t("admin.badge")}>
       <form onSubmit={handleSubmit} className="form auth-form">
         <label>
           {t("login.email")}
@@ -43,12 +43,7 @@ export function LoginPage() {
           />
         </label>
         <label>
-          <span className="label-row">
-            {t("login.password")}
-            <Link to="/forgot-password" className="auth-link">
-              {t("login.forgot")}
-            </Link>
-          </span>
+          {t("login.password")}
           <input
             type="password"
             autoComplete="current-password"
